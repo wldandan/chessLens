@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChessLens - AI Chess Review</title>
+    <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+        --bg-dark: #1a1a2e;
+        --bg-card: #16213e;
+        --accent-gold: #e6b800;
+        --accent-green: #4ade80;
+        --accent-red: #f87171;
+        --text-light: #f1f5f9;
+        --text-muted: #94a3b8;
+        --border: #334155;
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--bg-dark);
+        color: var(--text-light);
+        min-height: 100vh;
+    }
+    .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 3rem 2rem;
+    }
+    header {
+        text-align: center;
+        margin-bottom: 4rem;
+    }
+    header::before {
+        content: '♔';
+        font-size: 4rem;
+        color: var(--accent-gold);
+        display: block;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 30px rgba(230, 184, 0, 0.5);
+    }
+    .brand-name {
+        font-size: 3.5rem;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .slogan {
+        font-size: 1.25rem;
+        color: var(--text-muted);
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        margin-bottom: 1.5rem;
+    }
+    .ai-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem 1.25rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        letter-spacing: 0.05em;
+    }
+    .ai-badge::before {
+        content: '🤖';
+        font-size: 1rem;
+    }
+    .subtitle {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        margin-top: 0.75rem;
+    }
+    .stats {
+        display: flex;
+        justify-content: center;
+        gap: 3rem;
+        margin: 3rem 0;
+        padding: 2rem;
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+    }
+    .stat { text-align: center; }
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--accent-gold);
+    }
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+    .games-section h2 {
+        font-size: 1.25rem;
+        color: var(--accent-gold);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--accent-gold);
+        display: inline-block;
+    }
+    .game-list { display: flex; flex-direction: column; gap: 1rem; }
+
+    /* 卡片 */
+    .game-card {
+        background: var(--bg-card);
+        border-radius: 10px;
+        padding: 1rem 1.25rem;
+        border: 1px solid var(--border);
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 1.25rem;
+        transition: all 0.3s ease;
+    }
+    .game-card:hover {
+        border-color: var(--accent-gold);
+        transform: translateX(8px);
+        box-shadow: 0 0 20px rgba(230, 184, 0, 0.2);
+    }
+
+    /* 结果圆圈 */
+    .game-result {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    .result-win { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; }
+    .result-draw { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+    .result-loss { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+
+    /* 信息区域 */
+    .game-info h3 {
+        font-size: 1rem;
+        margin-bottom: 0.35rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .game-date {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-weight: 400;
+    }
+    .game-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        flex-wrap: wrap;
+    }
+    .game-color {
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.65rem;
+        font-weight: 500;
+    }
+    .color-white { background: #f8fafc; color: #1e293b; }
+    .color-black { background: #334155; color: #f1f5f9; }
+    .meta-dot { color: var(--border); }
+
+    /* 指标标签 */
+    .metric-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 5px;
+        font-size: 0.72rem;
+        line-height: 1.4;
+        font-weight: 500;
+    }
+    .metric-tag.green {
+        background: rgba(74, 222, 128, 0.15);
+        border: 1px solid rgba(74, 222, 128, 0.4);
+        color: var(--accent-green);
+    }
+    .metric-tag.green .value { font-weight: 700; }
+    .metric-tag.red {
+        background: rgba(248, 113, 113, 0.15);
+        border: 1px solid rgba(248, 113, 113, 0.4);
+        color: var(--accent-red);
+    }
+    .metric-tag.red .value { font-weight: 700; }
+
+    /* 步数和分钟标签 */
+    .metric-basic {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 5px;
+        font-size: 0.72rem;
+        line-height: 1.4;
+        background: rgba(230, 184, 0, 0.1);
+        border: 1px solid rgba(230, 184, 0, 0.3);
+        color: var(--accent-gold);
+    }
+    .metric-basic .value { font-weight: 600; }
+
+    /* 分析时间标签 */
+    .metric-time {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 5px;
+        font-size: 0.72rem;
+        line-height: 1.4;
+        background: rgba(139, 92, 246, 0.15);
+        border: 1px solid rgba(139, 92, 246, 0.4);
+        color: #a78bfa;
+    }
+    .metric-time .value { font-weight: 600; }
+
+    /* 链接 */
+    .game-link {
+        color: var(--accent-gold);
+        text-decoration: none;
+        padding: 0.4rem 0.85rem;
+        border: 1px solid var(--accent-gold);
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        font-size: 0.8rem;
+        font-weight: 500;
+        flex-shrink: 0;
+    }
+    .game-link:hover {
+        background: var(--accent-gold);
+        color: var(--bg-dark);
+    }
+    footer {
+        text-align: center;
+        margin-top: 4rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border);
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+    @media (max-width: 768px) {
+        .container { padding: 1.5rem 1rem; }
+        .brand-name { font-size: 2.5rem; }
+        .slogan { font-size: 1rem; }
+        .stats { gap: 1rem; padding: 1rem; }
+        .stat-value { font-size: 1.75rem; }
+        .game-card {
+            grid-template-columns: auto 1fr;
+            gap: 1rem;
+            padding: 1rem;
+        }
+        .game-link { grid-column: 1 / -1; text-align: center; }
+        .game-meta { flex-wrap: wrap; }
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="brand-name">ChessLens</div>
+            <div class="slogan">Review Smarter, Improve Faster</div>
+            <div class="ai-badge">🤖 AI-Powered Chess Review</div>
+            <p class="subtitle">aaronwang2026 的对局记录</p>
+        </header>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value">34</div>
+                <div class="stat-label">总对局</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" style="color: #22c55e;">13</div>
+                <div class="stat-label">胜</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" style="color: #f59e0b;">1</div>
+                <div class="stat-label">和</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" style="color: #ef4444;">20</div>
+                <div class="stat-label">败</div>
+            </div>
+        </div>
+
+        <section class="games-section">
+            <h2>近期对局</h2>
+            <div class="game-list">
+                
+        <div class="game-card">
+            <div class="game-result result-win">胜</div>
+            <div class="game-info">
+                <h3>vs itsbishara <span class="game-date">· 2026-05-24</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">41</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">10分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">2</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">10</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-05-24_169159534058_aaronwang2026_执白胜_itsbishara_41步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-win">胜</div>
+            <div class="game-info">
+                <h3>vs itsbishara <span class="game-date">· 2026-05-24</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">40</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">10分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">0</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">0</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 17:35</span></span>
+                </div>
+            </div>
+            <a href="./2026-05-24_dbe71255-5750-11f1-90b7-eaa88901000f_aaronwang2026_执白胜_itsbishara_40步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-win">胜</div>
+            <div class="game-info">
+                <h3>vs timotico <span class="game-date">· 2026-05-23</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">62</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">10分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">0</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">0</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-05-23_169117878948_timotico_执白胜_aaronwang2026_62步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs ASKAKKKKKKK <span class="game-date">· 2026-05-17</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">39</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">10分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">3</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">0</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-05-17_168819050964_ASKAKKKKKKK_执白负_aaronwang2026_39步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs serj200 <span class="game-date">· 2026-05-10</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-black">执黑</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">45</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">30分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">4</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">0</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-05-10_168495838946_serj200_执黑负_aaronwang2026_45步_1800.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs Rkyatn <span class="game-date">· 2026-05-10</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">74</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">10分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">5</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">0</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-05-10_168496375134_aaronwang2026_执白平_Rkyatn_74步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-win">胜</div>
+            <div class="game-info">
+                <h3>vs limjp77 <span class="game-date">· 2026-05-10</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">23</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">10分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">5</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">0</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-05-10_168496736778_aaronwang2026_执白胜_limjp77_23步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-win">胜</div>
+            <div class="game-info">
+                <h3>vs limjp77 <span class="game-date">· 2026-05-10</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">23</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">10分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">2</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">16</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-05-10_3905599e-4c5c-11f1-bb36-611ace01000f_aaronwang2026_执白胜_limjp77_23步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-win">胜</div>
+            <div class="game-info">
+                <h3>vs serj200 <span class="game-date">· 2026-05-10</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-black">执黑</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">45</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">30分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">4</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">12</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-05-10_7117bc68-4c58-11f1-bb36-611ace01000f_serj200_执黑胜_aaronwang2026_45步_1800.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-draw">和</div>
+            <div class="game-info">
+                <h3>vs Rkyatn <span class="game-date">· 2026-05-10</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">73</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">10分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">2</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">20</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-05-10_b7413ed4-4c5a-11f1-b713-35658f01000f_aaronwang2026_执白和_Rkyatn_73步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-win">胜</div>
+            <div class="game-info">
+                <h3>vs Taha10005 <span class="game-date">· 2026-05-06</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">49</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">10分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">0</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">3</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-05-06_168309525548_aaronwang2026_执白胜_Taha10005_49步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs IgorInic <span class="game-date">· 2026-05-05</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">33</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">10分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">3</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">0</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-05-05_168260627894_IgorInic_执白负_aaronwang2026_33步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs IgorInic <span class="game-date">· 2026-05-05</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-black">执黑</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">33</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">10分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">2</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">20</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-05-05_46a60d17-4865-11f1-90cc-da01ad01000f_IgorInic_执黑负_aaronwang2026_33步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs sanyamm4 <span class="game-date">· 2026-05-04</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">65</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">10分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">2</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">0</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-05-04_168217669514_aaronwang2026_执白负_sanyamm4_65步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs islemyyyyyyyyy <span class="game-date">· 2026-05-04</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">30</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">10分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">5</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">0</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-05-04_168218104386_islemyyyyyyyyy_执白负_aaronwang2026_30步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs 1RedaTolba <span class="game-date">· 2026-04-18</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-black">执黑</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">24</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">30分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">2</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">12</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-04-18_2db5122b-3b11-11f1-936c-2e0a7901000f_1RedaTolba_执黑负_aaronwang2026_24步_1800.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs Gunachess67 <span class="game-date">· 2026-04-15</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-black">执黑</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">62</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">30分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">3</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">16</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-04-15_414babe1-38aa-11f1-96b0-d5a12501000f_Gunachess67_执黑负_aaronwang2026_62步_1800.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs babbabar <span class="game-date">· 2026-04-11</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">96</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">15分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">4</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">12</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-04-11_85a6e328-3592-11f1-93ae-f0814701000f_aaronwang2026_执白负_babbabar_96步_900.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs panditaashish43 <span class="game-date">· 2026-04-10</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">51</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">15分钟+10秒</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">3</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">16</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-04-10_1a3707b8-34cd-11f1-96b0-d5a12501000f_aaronwang2026_执白负_panditaashish43_51步_900+10.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-win">胜</div>
+            <div class="game-info">
+                <h3>vs mssvp <span class="game-date">· 2026-04-10</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">47</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">-</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">3</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">20</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-04-10_45f1e4d0-34c8-11f1-96b0-d5a12501000f_aaronwang2026_执白胜_mssvp_47步.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs ashraykumarr <span class="game-date">· 2026-04-10</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">40</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">-</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">3</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">20</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-04-10_b4284ba9-34c4-11f1-977c-5b704c01000f_aaronwang2026_执白负_ashraykumarr_40步.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-win">胜</div>
+            <div class="game-info">
+                <h3>vs farhan098765 <span class="game-date">· 2026-04-08</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">40</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">-</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">3</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">20</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-04-08_2bc63ce1-332e-11f1-9b22-8e0bf401000f_aaronwang2026_执白胜_farhan098765_40步.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs Coach-Levy <span class="game-date">· 2026-04-08</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-black">执黑</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">75</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">-</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">0</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">10</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-04-08_4233f6c8-332c-11f1-904d-edfe4cda78ea_aaronwang2026_执黑负_Coach-Levy_75步.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs liverpoolFC7777 <span class="game-date">· 2026-04-08</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">5</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">10分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">0</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">1</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-04-08_e28efab0-332a-11f1-abd2-12fd3701000f_liverpoolFC7777_执白负_aaronwang2026_5步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs Now4r72 <span class="game-date">· 2026-04-06</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-black">执黑</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">31</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">10分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">3</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">16</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-04-06_349a5ab7-31a2-11f1-9111-c5406f01000f_Now4r72_执黑负_aaronwang2026_31步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-win">胜</div>
+            <div class="game-info">
+                <h3>vs Riosangpenakhluk <span class="game-date">· 2026-04-06</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">66</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">10分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">3</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">15</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-04-06_dd8b08fd-31a4-11f1-b5ef-1aeed801000f_aaronwang2026_执白胜_Riosangpenakhluk_66步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs Dnddonatus <span class="game-date">· 2026-04-05</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">51</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">10分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">3</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">12</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-04-05_1840e04a-30d8-11f1-b5ef-1aeed801000f_aaronwang2026_执白负_Dnddonatus_51步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-win">胜</div>
+            <div class="game-info">
+                <h3>vs nkr141618 <span class="game-date">· 2026-04-05</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">54</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">3分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">0</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">10</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-04-05_7c4e0eeb-30da-11f1-aa32-4f80a001000f_nkr141618_执白胜_aaronwang2026_54步_180.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs rinor <span class="game-date">· 2026-04-04</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-black">执黑</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">ma</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">29步</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">0</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">10</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-04-04_bef816f4-3007-11f1-9111-c5406f01000f_aaronwang2026_执黑负_rinor_ma_29步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs Shura73 <span class="game-date">· 2026-04-03</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-black">执黑</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">80</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">10分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">3</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">12</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-04-03_69077e5b-2f25-11f1-9396-c9874a01000f_aaronwang2026_执黑负_Shura73_80步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs lieurboy <span class="game-date">· 2026-04-03</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">41</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">5分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">0</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">10</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-04-03_7d325afa-2f2a-11f1-bfba-a1fcda01000f_lieurboy_执白负_aaronwang2026_41步_300.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-win">胜</div>
+            <div class="game-info">
+                <h3>vs batmatt <span class="game-date">· 2026-04-03</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">103</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">5分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">0</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">15</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-04-03_b46728db-2f29-11f1-b5ef-1aeed801000f_aaronwang2026_执白胜_batmatt_103步_300.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-loss">败</div>
+            <div class="game-info">
+                <h3>vs hemmml <span class="game-date">· 2026-04-03</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">75</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">10分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">0</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">10</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-04-03_cd90f31c-2f25-11f1-9396-c9874a01000f_hemmml_执白负_aaronwang2026_75步_600.html" class="game-link">查看 →</a>
+        </div>
+
+        <div class="game-card">
+            <div class="game-result result-win">胜</div>
+            <div class="game-info">
+                <h3>vs betobastos <span class="game-date">· 2026-04-03</span></h3>
+                <div class="game-meta">
+                    <span class="game-color color-white">执白</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">♟ <span class="value">46</span> 步</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-basic">⏱ <span class="value">5分钟</span></span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-tag green">✨ <span class="value">0</span> 亮点</span>
+                    <span class="metric-tag red">⚠️ <span class="value">10</span> 失误</span>
+                    <span class="meta-dot">·</span>
+                    <span class="metric-time">📝 <span class="value">2026-05-26 16:37</span></span>
+                </div>
+            </div>
+            <a href="./2026-04-03_e4bcedcd-2f28-11f1-9111-c5406f01000f_betobastos_执白胜_aaronwang2026_46步_300.html" class="game-link">查看 →</a>
+        </div>
+
+            </div>
+        </section>
+
+        <footer>
+            <p>♔ ChessLens · Review Smarter, Improve Faster</p>
+        </footer>
+    </div>
+</body>
+</html>

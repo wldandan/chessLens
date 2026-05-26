@@ -514,6 +514,21 @@ GAME_CSS = """
         border-top: 1px solid var(--border);
         margin: 1.5rem 0;
     }
+    .board-image {
+        display: block;
+        max-width: 100%;
+        border-radius: 8px;
+        margin: 0 auto 2rem;
+        border: 2px solid var(--accent-gold);
+        box-shadow: 0 0 20px rgba(230, 184, 0, 0.3);
+    }
+    .board-image-caption {
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        margin-top: -1.5rem;
+        margin-bottom: 2rem;
+    }
     @media (max-width: 768px) {
         body { padding: 1rem; }
         .container { padding: 0; }
@@ -639,6 +654,24 @@ def generate_game_html(filename):
 
     title = filename.replace('.md', '').replace('_', ' ')
 
+    # Insert board image if it exists (same game_id)
+    import re as re2
+    game_id_match = re2.search(r'^(\d{4}-\d{2}-\d{2})_([^_]+)_', filename)
+    board_image_html = ''
+    if game_id_match:
+        game_id = game_id_match.group(2)
+        images_dir = os.path.join(os.path.dirname(SRC_DIR), 'images')
+        # Look for image with matching game_id
+        if os.path.exists(images_dir):
+            for img_file in os.listdir(images_dir):
+                if game_id in img_file and img_file.endswith('.png'):
+                    img_url = f"reviews/images/{img_file}"
+                    board_image_html = f'''
+            <img src="{img_url}" alt="棋局终局局面" class="board-image">
+            <p class="board-image-caption">终局局面（点击查看 Chess.com 完整复盘）</p>
+'''
+                    break
+
     # Get analyze time from file modification time
     file_path = os.path.join(SRC_DIR, filename)
     analyze_time = get_file_mtime(file_path)
@@ -656,6 +689,7 @@ def generate_game_html(filename):
     <div class="container">
         <a href="./index.html" class="back-link">← 返回列表</a>
         <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">📝 分析时间：{analyze_time}</p>
+        {board_image_html}
         <div class="content">
             {body_html}
         </div>

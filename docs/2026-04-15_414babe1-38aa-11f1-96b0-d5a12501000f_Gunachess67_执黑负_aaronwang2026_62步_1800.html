@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026-04-15 414babe1-38aa-11f1-96b0-d5a12501000f Gunachess67 执黑负 aaronwang2026 62步 1800</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+        --bg-dark: #1a1a2e;
+        --bg-card: #16213e;
+        --accent-gold: #e6b800;
+        --text-light: #f1f5f9;
+        --text-muted: #94a3b8;
+        --border: #334155;
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--bg-dark);
+        color: var(--text-light);
+        min-height: 100vh;
+        padding: 2rem;
+    }
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .back-link {
+        display: inline-block;
+        margin-bottom: 2rem;
+        color: var(--accent-gold);
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+    .back-link:hover { text-decoration: underline; }
+    .content {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 2.5rem;
+        border: 1px solid var(--border);
+    }
+    h1 {
+        font-size: 1.75rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--border);
+    }
+    .content h2 {
+        color: var(--accent-gold);
+        font-size: 1.1rem;
+        margin: 1.5rem 0 0.75rem;
+    }
+    .content h3 {
+        color: var(--text-light);
+        font-size: 1rem;
+        margin: 1rem 0 0.5rem;
+    }
+    .content p { line-height: 1.8; margin-bottom: 1rem; }
+    .content ul, .content ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+    .content li { line-height: 1.8; margin-bottom: 0.25rem; }
+    .content strong { color: var(--accent-gold); }
+    .content code {
+        background: var(--bg-dark);
+        padding: 0.2rem 0.4rem;
+        border-radius: 3px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9em;
+    }
+    .content pre {
+        background: var(--bg-dark);
+        padding: 1rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 1rem 0;
+    }
+    .content pre code { background: none; padding: 0; }
+    .content hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 1.5rem 0;
+    }
+    .board-image {
+        display: block;
+        max-width: 100%;
+        border-radius: 8px;
+        margin: 0 auto 2rem;
+        border: 2px solid var(--accent-gold);
+        box-shadow: 0 0 20px rgba(230, 184, 0, 0.3);
+    }
+    .board-image-caption {
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        margin-top: -1.5rem;
+        margin-bottom: 2rem;
+    }
+    @media (max-width: 768px) {
+        body { padding: 1rem; }
+        .container { padding: 0; }
+        .content { padding: 1.5rem; }
+        h1 { font-size: 1.25rem; }
+        .content h2 { font-size: 1rem; }
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+        <a href="./index.html" class="back-link">← 返回列表</a>
+        <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">📝 分析时间：2026-05-26 16:37</p>
+        
+        <div class="content">
+            <h1>Gunachess67 vs aaronwang2026 | 2026-04-15 | 执黑负</h1>
+<h2>总体评价</h2>
+<p>一盘黑方全面崩溃的对局。白方 Gunachess67 以 Scholar's Mate 威胁开局（Qf3 准备 Qxf7#），黑方应对有误，第 2 步 Nc6 就是 MISTAKE。之后黑方在第 5 步贪吃 Nxd4 导致丢半子，从此局面一发不可收拾。黑方在之后的对局中几乎没有一步好棋，丢车、丢象、丢后，最终被白方以绝对子力优势将杀。对手评级仅 1297，但黑方几乎没有给出任何抵抗就输掉了比赛。</p>
+<h2>📊 棋局概览</h2>
+<ul>
+<li><strong>下棋时间</strong>：2026-04-15</li>
+<li><strong>执白</strong>：Gunachess67（1297）</li>
+<li><strong>执黑</strong>：aaronwang2026（1456）</li>
+<li>比赛结果：<strong>0-1</strong>（白方将杀获胜）</li>
+<li>总回合数：62 步</li>
+<li>时间控制：1800（30分钟）</li>
+<li>开局：Kings Pawn Opening 1...e5</li>
+</ul>
+<h2>🎯 亮点时刻</h2>
+<ul>
+<li><strong>第5步（白）</strong> — d4！漂亮的中心冲击，将局面从 -0.45 扭转为 +3.22</li>
+<li><strong>第9步（白）</strong> — Ne2！妙手防范，将优势扩大至 +4.17</li>
+<li><strong>第18步（白）</strong> — O-O！王车易位安全转移，优势扩大</li>
+</ul>
+<h2>⚠️ 关键失误（按重要性排序）</h2>
+<ol>
+<li><p><strong>第5步（黑）</strong> — 💥BLUNDER</p>
+<ul>
+<li>跌 <strong>6.24 兵</strong>（+3.02 → -3.22）</li>
+<li>推荐着法：<code>5...Nxd4</code>（正确吃法）</li>
+<li>原因：Nxd4 是正确着法，但之后 Bc5 是败着，正确是走 Nf6 或直接防守</li>
+</ul>
+</li>
+<li><p><strong>第6步（黑）</strong> — 💥BLUNDER</p>
+<ul>
+<li>跌 <strong>4.60 兵</strong>（+3.01 → -1.50）</li>
+<li>推荐着法：<code>6...d5</code>（守住中心）</li>
+<li>原因：Bc5 消极，应走 d5 反击中心</li>
+</ul>
+</li>
+<li><p><strong>第8步（黑）</strong> — 💥BLUNDER</p>
+<ul>
+<li>跌 <strong>5.11 兵</strong>（+2.68 → -2.43）</li>
+<li>推荐着法：<code>8...d5</code>（守住中心）</li>
+<li>原因：O-O 过于急躁，给白方 Ne2 防范后继续进攻</li>
+</ul>
+</li>
+<li><p><strong>第9步（黑）</strong> — 💥BLUNDER</p>
+<ul>
+<li>跌 <strong>8.14 兵</strong>（+3.93 → -4.21）</li>
+<li>推荐着法：<code>9...Nxe4</code>（正确吃象）</li>
+<li>原因：Na5 大恶手，应直接 Nxe4 吃象</li>
+</ul>
+</li>
+</ol>
+<h2>💡 可以更好的地方</h2>
+<ol>
+<li><strong>开局准备</strong>：第 1...e5 后，面对 2.Qh5 应走 Nf6 攻击白后，而不是 Nc6</li>
+<li><strong>第 6 步 d5</strong>：应直接 d5 反击中心，不要走被动的 Bc5</li>
+<li><strong>不要贪子</strong>：第 5 步 Nxd4 后，正确的后续是 Nf6 而不是 Bc5</li>
+<li><strong>整体心态</strong>：在少子时不要继续恶化局面，应尽早认输节省时间</li>
+</ol>
+<h2>📚 开局学习建议</h2>
+<p><strong>对付 Scholar's Mate</strong>：建议学习：</p>
+<ul>
+<li>2...Nf6 攻击白后是正统应手，不要走 Nc6 被 Bc4 牵制</li>
+<li>2...g6 走菲戈尔防御也可以，但不如 Nf6 直接</li>
+<li>面对 Bc4，后翼易位（O-O-O）是正确选择</li>
+</ul>
+<h2>🌟 今日收获</h2>
+<ul>
+<li><strong>Scholar's Mate 防范</strong>：第 2...Nf6 是正确应手，不是 Nc6</li>
+<li><strong>贪子代价</strong>：第 5 步贪 Nxd4 后，BC5 是致命失误，正确应直接 Nf6 反击</li>
+<li><strong>及时认输</strong>：少子失势后应节省时间准备下一盘</li>
+</ul>
+<h2>附录：局面评估走势 + 失误详情（合一表）</h2>
+<table>
+<thead>
+<tr>
+  <th>步</th>
+  <th>方</th>
+  <th>着法</th>
+  <th>评估</th>
+  <th>趋势</th>
+  <th>类型</th>
+  <th>跌分</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>1</td>
+  <td>白</td>
+  <td>e4</td>
+  <td>-0.45</td>
+  <td>⚖️</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>1</td>
+  <td>黑</td>
+  <td>e5</td>
+  <td>+0.39</td>
+  <td>⚖️</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>白</td>
+  <td>Qh5</td>
+  <td>+0.44</td>
+  <td>⚖️</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>黑</td>
+  <td>Nc6</td>
+  <td>-0.37</td>
+  <td>⚖️</td>
+  <td>⚠️ MISTAKE</td>
+  <td><strong>0.81</strong></td>
+</tr>
+<tr>
+  <td>3</td>
+  <td>白</td>
+  <td>Bc4</td>
+  <td>+0.43</td>
+  <td>⚖️</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>3</td>
+  <td>黑</td>
+  <td>g6</td>
+  <td>-0.43</td>
+  <td>⚖️</td>
+  <td>⚠️ MISTAKE</td>
+  <td>+0.86</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td>白</td>
+  <td>Qf3</td>
+  <td>+0.40</td>
+  <td>⚖️</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>4</td>
+  <td>黑</td>
+  <td>Nf6</td>
+  <td>-0.45</td>
+  <td>⚖️</td>
+  <td>⚠️ MISTAKE</td>
+  <td>+0.85</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td>白</td>
+  <td>d4</td>
+  <td>+3.22</td>
+  <td>🟢</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>5</td>
+  <td>黑</td>
+  <td>Nxd4</td>
+  <td>-3.02</td>
+  <td>💀</td>
+  <td>💥 BLUNDER</td>
+  <td><strong>6.24</strong></td>
+</tr>
+<tr>
+  <td>6</td>
+  <td>白</td>
+  <td>Qd1</td>
+  <td>+3.10</td>
+  <td>🟢</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>6</td>
+  <td>黑</td>
+  <td>Bc5</td>
+  <td>-1.50</td>
+  <td>🔴</td>
+  <td>💥 BLUNDER</td>
+  <td><strong>4.60</strong></td>
+</tr>
+<tr>
+  <td>7</td>
+  <td>白</td>
+  <td>c3</td>
+  <td>+1.51</td>
+  <td>🟡</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>7</td>
+  <td>黑</td>
+  <td>Nc6</td>
+  <td>-1.57</td>
+  <td>🔴</td>
+  <td>💥 BLUNDER</td>
+  <td>+3.08</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td>白</td>
+  <td>Qb3</td>
+  <td>+2.54</td>
+  <td>🟢</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>8</td>
+  <td>黑</td>
+  <td>O-O</td>
+  <td>-2.57</td>
+  <td>💀</td>
+  <td>💥 BLUNDER</td>
+  <td><strong>5.11</strong></td>
+</tr>
+<tr>
+  <td>9</td>
+  <td>白</td>
+  <td>Ne2</td>
+  <td>+4.17</td>
+  <td>🟢</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>9</td>
+  <td>黑</td>
+  <td>Na5</td>
+  <td>-3.97</td>
+  <td>💀</td>
+  <td>💥 BLUNDER</td>
+  <td><strong>8.14</strong></td>
+</tr>
+<tr>
+  <td>10</td>
+  <td>白</td>
+  <td>Qb5</td>
+  <td>+4.43</td>
+  <td>🟢</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>10</td>
+  <td>黑</td>
+  <td>b6</td>
+  <td>-3.83</td>
+  <td>💀</td>
+  <td>💥 BLUNDER</td>
+  <td>+8.26</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td>白</td>
+  <td>Bd3</td>
+  <td>+3.92</td>
+  <td>🟢</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>11</td>
+  <td>黑</td>
+  <td>a6</td>
+  <td>-3.87</td>
+  <td>💀</td>
+  <td>💥 BLUNDER</td>
+  <td>+7.79</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td>白</td>
+  <td>Qa4</td>
+  <td>+3.83</td>
+  <td>🟢</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>12</td>
+  <td>黑</td>
+  <td>c6</td>
+  <td>-0.79</td>
+  <td>🔴</td>
+  <td>💥 BLUNDER</td>
+  <td>+4.62</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td>白</td>
+  <td>Qa3</td>
+  <td>+1.87</td>
+  <td>🟡</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>14</td>
+  <td>黑</td>
+  <td>Bd6</td>
+  <td>+1.24</td>
+  <td>🟡</td>
+  <td>⚠️ MISTAKE</td>
+  <td>+0.63</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td>白</td>
+  <td>Bg5</td>
+  <td>+1.67</td>
+  <td>🟡</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>15</td>
+  <td>黑</td>
+  <td>Nc4</td>
+  <td>-1.49</td>
+  <td>🔴</td>
+  <td>💥 BLUNDER</td>
+  <td>+3.16</td>
+</tr>
+<tr>
+  <td>17</td>
+  <td>白</td>
+  <td>Bxf6</td>
+  <td>+2.35</td>
+  <td>🟢</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>17</td>
+  <td>黑</td>
+  <td>Qxf6</td>
+  <td>-2.33</td>
+  <td>💀</td>
+  <td>💥 BLUNDER</td>
+  <td>+4.68</td>
+</tr>
+<tr>
+  <td>18</td>
+  <td>白</td>
+  <td>O-O</td>
+  <td>+2.90</td>
+  <td>🟢</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>18</td>
+  <td>黑</td>
+  <td>Bb7</td>
+  <td>-2.08</td>
+  <td>💀</td>
+  <td>💥 BLUNDER</td>
+  <td>+4.98</td>
+</tr>
+<tr>
+  <td>21</td>
+  <td>白</td>
+  <td>Qb3</td>
+  <td>+2.22</td>
+  <td>🟢</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>21</td>
+  <td>黑</td>
+  <td>Ba6</td>
+  <td>-2.65</td>
+  <td>💀</td>
+  <td>💥 BLUNDER</td>
+  <td>+4.87</td>
+</tr>
+<tr>
+  <td>22</td>
+  <td>白</td>
+  <td>Nxd6</td>
+  <td>+2.41</td>
+  <td>🟢</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>22</td>
+  <td>黑</td>
+  <td>Qxd6</td>
+  <td>-2.26</td>
+  <td>💀</td>
+  <td>💥 BLUNDER</td>
+  <td>+4.67</td>
+</tr>
+<tr>
+  <td>24</td>
+  <td>白</td>
+  <td>Qxb4</td>
+  <td>+4.14</td>
+  <td>🟢</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>24</td>
+  <td>黑</td>
+  <td>Qxb4</td>
+  <td>-4.35</td>
+  <td>💀</td>
+  <td>💥 BLUNDER</td>
+  <td>+8.49</td>
+</tr>
+<tr>
+  <td>25</td>
+  <td>白</td>
+  <td>cxb4</td>
+  <td>+4.41</td>
+  <td>🟢</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>25</td>
+  <td>黑</td>
+  <td>Bxe2</td>
+  <td>-4.42</td>
+  <td>💀</td>
+  <td>💥 BLUNDER</td>
+  <td>+8.83</td>
+</tr>
+<tr>
+  <td>26</td>
+  <td>白</td>
+  <td>Rxd7</td>
+  <td>+4.34</td>
+  <td>🟢</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>26</td>
+  <td>黑</td>
+  <td>Rad8</td>
+  <td>-3.86</td>
+  <td>💀</td>
+  <td>💥 BLUNDER</td>
+  <td>+8.20</td>
+</tr>
+<tr>
+  <td>27</td>
+  <td>白</td>
+  <td>Rc7</td>
+  <td>+3.82</td>
+  <td>🟢</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>27</td>
+  <td>黑</td>
+  <td>Rc8</td>
+  <td>-3.59</td>
+  <td>💀</td>
+  <td>💥 BLUNDER</td>
+  <td>+7.41</td>
+</tr>
+<tr>
+  <td>36</td>
+  <td>白</td>
+  <td>b5</td>
+  <td>+4.02</td>
+  <td>🟢</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>36</td>
+  <td>黑</td>
+  <td>c5</td>
+  <td>-2.76</td>
+  <td>💀</td>
+  <td>💥 BLUNDER</td>
+  <td>+6.78</td>
+</tr>
+<tr>
+  <td>38</td>
+  <td>白</td>
+  <td>gxf5</td>
+  <td>+5.26</td>
+  <td>🟢</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>38</td>
+  <td>黑</td>
+  <td>Rd1+</td>
+  <td>-5.32</td>
+  <td>💀</td>
+  <td>💥 BLUNDER</td>
+  <td>+10.58</td>
+</tr>
+<tr>
+  <td>44</td>
+  <td>白</td>
+  <td>f6</td>
+  <td>+11.27</td>
+  <td>🟢</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>44</td>
+  <td>黑</td>
+  <td>c4</td>
+  <td>Mate-12</td>
+  <td>💀</td>
+  <td>💥 BLUNDER</td>
+  <td>1011.27</td>
+</tr>
+<tr>
+  <td>45</td>
+  <td>白</td>
+  <td>h4</td>
+  <td>Mate+7</td>
+  <td>👑</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>45</td>
+  <td>黑</td>
+  <td>c3</td>
+  <td>Mate-5</td>
+  <td>💀</td>
+  <td>💥 BLUNDER</td>
+  <td>2000</td>
+</tr>
+<tr>
+  <td>47</td>
+  <td>白</td>
+  <td>hxg6</td>
+  <td>Mate+1</td>
+  <td>👑</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>47</td>
+  <td>黑</td>
+  <td>e4</td>
+  <td>Mate-7</td>
+  <td>💀</td>
+  <td>💥 BLUNDER</td>
+  <td>2000</td>
+</tr>
+<tr>
+  <td>50</td>
+  <td>白</td>
+  <td>f8=Q</td>
+  <td>Mate+3</td>
+  <td>👑</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>50</td>
+  <td>黑</td>
+  <td>c1=Q+</td>
+  <td>Mate-2</td>
+  <td>💀</td>
+  <td>💥 BLUNDER</td>
+  <td>2000</td>
+</tr>
+<tr>
+  <td>62</td>
+  <td>白</td>
+  <td>Kc8</td>
+  <td>Mate+1</td>
+  <td>👑</td>
+  <td></td>
+  <td></td>
+</tr>
+<tr>
+  <td>62</td>
+  <td>黑</td>
+  <td>Rb8#</td>
+  <td>Mate0</td>
+  <td>👑</td>
+  <td>💥 BLUNDER</td>
+  <td>2000</td>
+</tr>
+</tbody>
+</table>
+
+        </div>
+    </div>
+</body>
+</html>
