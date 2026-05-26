@@ -1,0 +1,6 @@
+_site/
+cookies.txt
+.env
+*.pem
+*.key
+.DS_Store
