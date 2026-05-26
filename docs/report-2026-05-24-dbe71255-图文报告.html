@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏁 复盘报告 | aaronwang2026 胜 itsbishara</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #0d0d0d; color: #f0f0f0; min-height: 100vh; }
+  .report { max-width: 680px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  /* Header */
+  .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 28px 24px; margin-bottom: 16px; border: 1px solid #2a2a4a; }
+  .result-badge { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #d4af37, #f5d060); color: #1a1a1a; font-weight: 700; font-size: 13px; padding: 4px 12px; border-radius: 20px; margin-bottom: 12px; }
+  .players { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+  .players .me { color: #f5d060; }
+  .players .opp { color: #aaa; }
+  .meta { display: flex; gap: 16px; font-size: 13px; color: #888; flex-wrap: wrap; }
+  .meta span { background: rgba(255,255,255,0.06); padding: 3px 10px; border-radius: 8px; }
+
+  /* Board */
+  .board-wrap { margin-bottom: 16px; border-radius: 12px; overflow: hidden; border: 2px solid #d4af37; box-shadow: 0 4px 24px rgba(212,175,55,0.15); }
+  .board-wrap img { width: 100%; display: block; }
+  .board-caption { background: rgba(212,175,55,0.08); padding: 8px 14px; font-size: 12px; color: #888; text-align: center; }
+
+  /* Summary cards */
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .summary-card { background: #16162a; border-radius: 12px; padding: 16px; border: 1px solid #2a2a4a; }
+  .summary-card.full { grid-column: 1/-1; }
+  .card-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .card-value { font-size: 28px; font-weight: 700; color: #f5d060; }
+  .card-sub { font-size: 12px; color: #888; margin-top: 4px; }
+  .card-value.red { color: #e74c3c; }
+  .card-value.green { color: #2ecc71; }
+
+  /* Section */
+  .section { background: #16162a; border-radius: 12px; padding: 20px; margin-bottom: 14px; border: 1px solid #2a2a4a; }
+  .section-title { font-size: 15px; font-weight: 700; color: #f5d060; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .section-title .icon { font-size: 18px; }
+
+  /* Blunder list */
+  .blunder-item { background: rgba(231,76,60,0.08); border-left: 3px solid #e74c3c; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+  .blunder-move { font-size: 14px; font-weight: 700; color: #e74c3c; margin-bottom: 6px; }
+  .blunder-detail { font-size: 12px; color: #aaa; line-height: 1.6; }
+  .blunder-detail .correct { color: #2ecc71; font-weight: 600; }
+  .loss-badge { display: inline-block; background: rgba(231,76,60,0.2); color: #e74c3c; font-size: 11px; padding: 2px 8px; border-radius: 4px; margin-left: 8px; }
+
+  /* Good moves */
+  .good-item { background: rgba(46,204,113,0.08); border-left: 3px solid #2ecc71; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+  .good-move { font-size: 14px; font-weight: 700; color: #2ecc71; margin-bottom: 6px; }
+  .good-detail { font-size: 12px; color: #aaa; line-height: 1.6; }
+
+  /* Phase timeline */
+  .phase { margin-bottom: 14px; }
+  .phase-label { font-size: 12px; color: #666; margin-bottom: 6px; font-weight: 600; }
+  .phase-bar-wrap { background: #2a2a4a; border-radius: 8px; height: 8px; overflow: hidden; }
+  .phase-bar { height: 100%; border-radius: 8px; }
+  .phase-bar.good { background: linear-gradient(90deg, #2ecc71, #27ae60); }
+  .phase-bar.ok { background: linear-gradient(90deg, #f39c12, #e67e22); }
+  .phase-bar.bad { background: linear-gradient(90deg, #e74c3c, #c0392b); }
+  .phase-tags { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .phase-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+  .tag-op { background: rgba(52,152,219,0.2); color: #5dade2; }
+  .tag-ml { background: rgba(155,89,182,0.2); color: #9b59b6; }
+  .tag-end { background: rgba(241,196,15,0.2); color: #f1c40f; }
+
+  /* Evaluation chart */
+  .eval-chart { margin: 12px 0; }
+  .eval-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; }
+  .eval-num { color: #666; width: 20px; text-align: right; flex-shrink: 0; }
+  .eval-bar-bg { flex: 1; height: 20px; background: #2a2a4a; border-radius: 4px; overflow: hidden; position: relative; }
+  .eval-bar { height: 100%; border-radius: 4px; transition: width 0.3s; }
+  .eval-bar.white { background: linear-gradient(90deg, #f5d060, #d4af37); }
+  .eval-bar.black { background: linear-gradient(90deg, #555, #333); }
+  .eval-val { color: #aaa; width: 36px; flex-shrink: 0; }
+  .eval-sym { width: 16px; text-align: center; }
+
+  /* Tip box */
+  .tip-box { background: rgba(241,196,15,0.06); border: 1px solid rgba(241,196,15,0.2); border-radius: 10px; padding: 14px; }
+  .tip-title { font-size: 12px; color: #f1c40f; font-weight: 700; margin-bottom: 8px; }
+  .tip-text { font-size: 13px; color: #ccc; line-height: 1.7; }
+
+  /* Footer */
+  .footer { text-align: center; font-size: 11px; color: #444; padding: 20px 0; }
+  .footer a { color: #666; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="report">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="result-badge">🏆 白胜 1-0</div>
+    <div class="players">
+      <span class="me">aaronwang2026</span>
+      <span style="color:#555;font-weight:400"> ⚔️ </span>
+      <span class="opp">itsbishara</span>
+    </div>
+    <div class="meta">
+      <span>⚫ 意大利开局</span>
+      <span>⏱ 10+0</span>
+      <span>📍 40步</span>
+      <span>📅 2026-05-24</span>
+    </div>
+  </div>
+
+  <!-- Board -->
+  <div class="board-wrap">
+    <img src="docs/reviews/images/review_01_board.png" alt="终局棋盘">
+    <div class="board-caption">📌 终局局面 — 白方多一车，但已被将死</div>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="card-label">胜/平/负</div>
+      <div class="card-value">1-0-0</div>
+      <div class="card-sub">5月战绩 · 3胜2负</div>
+    </div>
+    <div class="summary-card">
+      <div class="card-label">关键失误</div>
+      <div class="card-value red">27次</div>
+      <div class="card-sub">💀 致命失误 1 · 💥大失误 26</div>
+    </div>
+    <div class="summary-card full">
+      <div class="card-label">最大失误（第37步）</div>
+      <div style="font-size:15px;color:#e74c3c;font-weight:700;margin:4px 0">Rb5+ → Rb5+</div>
+      <div class="card-sub" style="color:#e74c3c">评估下跌 ▼ 1007.9 兵 · 正确着法 Ra7+ → Kd7 → c8=Q#</div>
+    </div>
+  </div>
+
+  <!-- Opening phase -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🚀</span>开局表现</div>
+    <div class="phase">
+      <div class="phase-label">意大利开局 · 前10步</div>
+      <div class="phase-bar-wrap"><div class="phase-bar ok" style="width:72%"></div></div>
+      <div class="phase-tags">
+        <span class="phase-tag tag-op">Nc3 ⚠️</span>
+        <span class="phase-tag tag-op">d3 ⚠️</span>
+        <span class="phase-tag tag-op">Nf3 ⚠️</span>
+        <span class="phase-tag tag-op">O-O ⚠️</span>
+      </div>
+    </div>
+    <div class="tip-box">
+      <div class="tip-title">💡 开局建议</div>
+      <div class="tip-text">意大利开局中，<strong style="color:#f5d060">Nc3</strong> 应改为 <strong style="color:#2ecc71">Nf3</strong>，保留双象发展机会。<strong style="color:#f5d060">d3</strong> 应改为 <strong style="color:#2ecc71">c3</strong> 巩固中心。尽量避免提前易位，让双象保持活动空间。</div>
+    </div>
+  </div>
+
+  <!-- Key blunders -->
+  <div class="section">
+    <div class="section-title"><span class="icon">💀</span>致命失误 TOP 3</div>
+
+    <div class="blunder-item">
+      <div class="blunder-move">第37步 · Rb5+ <span class="loss-badge">▼1008 兵</span></div>
+      <div class="blunder-detail">
+        错误：<span style="text-decoration:line-through;color:#e74c3c">Rb5+</span> → 对手轻松化解
+        <br>正确：<span class="correct">Ra7+ → Kd7 → c8=Q+ → Kd6 → Qc7#</span> → <strong style="color:#2ecc71">绝杀！</strong>
+      </div>
+    </div>
+
+    <div class="blunder-item">
+      <div class="blunder-move">第36步 · c7+ <span class="loss-badge">▼21.3 兵</span></div>
+      <div class="blunder-detail">
+        错误：<span style="text-decoration:line-through;color:#e74c3c">c7+</span> → 对手 Kc8 吃掉威胁
+        <br>正确：<span class="correct">Kf2 → g4 → Rh7 → Ke8 → c7</span> → <strong style="color:#2ecc71">保留王车位置优势</strong>
+      </div>
+    </div>
+
+    <div class="blunder-item">
+      <div class="blunder-move">第35步 · Ba6 <span class="loss-badge">▼19.8 兵</span></div>
+      <div class="blunder-detail">
+        错误：<span style="text-decoration:line-through;color:#e74c3c">Ba6</span> → 象失去控制权
+        <br>正确：<span class="correct">Re7 → Bf5 → g4 → Be6 → Re8+</span> → <strong style="color:#2ecc71">保持车路畅通</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Good moves -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🟢</span>好棋</div>
+
+    <div class="good-item">
+      <div class="good-move">第13步 · Qxd4 🟢</div>
+      <div class="good-detail">吃回中心兵，并威胁 f7 杀棋。评估从 +0.17 → <strong style="color:#2ecc71">+2.65</strong>，一步拉开差距。对手随后出现 💥大失误（b6）。</div>
+    </div>
+
+    <div class="good-item">
+      <div class="good-move">第11步 · exd5 🟢</div>
+      <div class="good-detail">主动打开中心，削弱黑方象的保护。评估从 +0.00 → <strong style="color:#2ecc71">+0.48</strong>，获得中心控制权。</div>
+    </div>
+  </div>
+
+  <!-- Evaluation trend -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📈</span>局面评估走势</div>
+    <div class="eval-chart">
+      <div class="eval-row">
+        <span class="eval-num">1</span><span class="eval-sym">⚖️</span>
+        <div class="eval-bar-bg"><div class="eval-bar white" style="width:45%"></div></div>
+        <span class="eval-val">-0.45</span>
+      </div>
+      <div class="eval-row">
+        <span class="eval-num">7</span><span class="eval-sym">⚖️</span>
+        <div class="eval-bar-bg"><div class="eval-bar white" style="width:48%"></div></div>
+        <span class="eval-val">-0.03</span>
+      </div>
+      <div class="eval-row">
+        <span class="eval-num">11</span><span class="eval-sym">⚖️</span>
+        <div class="eval-bar-bg"><div class="eval-bar white" style="width:55%"></div></div>
+        <span class="eval-val">+0.48</span>
+      </div>
+      <div class="eval-row">
+        <span class="eval-num">13</span><span class="eval-sym" style="color:#2ecc71">🟢</span>
+        <div class="eval-bar-bg"><div class="eval-bar white" style="width:80%"></div></div>
+        <span class="eval-val" style="color:#2ecc71">+2.65</span>
+      </div>
+      <div class="eval-row">
+        <span class="eval-num">20</span><span class="eval-sym">⚖️</span>
+        <div class="eval-bar-bg"><div class="eval-bar white" style="width:53%"></div></div>
+        <span class="eval-val">+0.06</span>
+      </div>
+      <div class="eval-row">
+        <span class="eval-num">36</span><span class="eval-sym" style="color:#e74c3c">💀</span>
+        <div class="eval-bar-bg"><div class="eval-bar black" style="width:90%"></div></div>
+        <span class="eval-val" style="color:#e74c3c">-9.08</span>
+      </div>
+    </div>
+    <div class="tip-box">
+      <div class="tip-title">📌 关键转折点</div>
+      <div class="tip-text">第13步 <strong style="color:#2ecc71">Qxd4</strong> 是本局转折点——评估跃升 +2.65。但之后连续出现失误，尤其是第36-37步损失惨重。开局积累的优势在残局中被逐渐侵蚀。</div>
+    </div>
+  </div>
+
+  <!-- Takeaway -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🎯</span>练习建议</div>
+    <div style="display:grid;gap:10px">
+      <div style="background:rgba(46,204,113,0.08);border-radius:8px;padding:12px 14px;border-left:3px solid #2ecc71">
+        <div style="font-size:13px;font-weight:700;color:#2ecc71;margin-bottom:4px">🟢 优势保持</div>
+        <div style="font-size:12px;color:#aaa;line-height:1.6">开局走出好棋（Qxd4）后，继续保持压力——不要急于简化，利用对方失误扩大优势。</div>
+      </div>
+      <div style="background:rgba(231,76,60,0.08);border-radius:8px;padding:12px 14px;border-left:3px solid #e74c3c">
+        <div style="font-size:13px;font-weight:700;color:#e74c3c;margin-bottom:4px">💀 残局专注</div>
+        <div style="font-size:12px;color:#aaa;line-height:1.6">第36-37步连续失误，残局王的位置控制很关键。多练习 <strong style="color:#f5d060">王残局（King endgame）</strong>走法。</div>
+      </div>
+      <div style="background:rgba(241,196,15,0.08);border-radius:8px;padding:12px 14px;border-left:3px solid #f1c40f">
+        <div style="font-size:13px;font-weight:700;color:#f1c40f;margin-bottom:4px">⚠️ 防守意识</div>
+        <div style="font-size:12px;color:#aaa;line-height:1.6">对手 Qe1+ 之后，局面已经危险。此时应优先防守（Kf2 而非 c7+），不要冒险进攻。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    ChessLens AI 复盘 · chess.com 存档 · 欢迎分享
+  </div>
+</div>
+</body>
+</html>
