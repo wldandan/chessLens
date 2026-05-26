@@ -1,0 +1,6 @@
+[submodule "chess-ai-coach-skills"]
+	path = chess-ai-coach-skills
+	url = /Users/leiw/chessLens/chess-ai-coach-skills
+[submodule "chess-reviews-summary"]
+	path = chess-reviews-summary
+	url = /Users/leiw/chessLens/chess-reviews-summary
