@@ -154,17 +154,16 @@ def analyze_game(pgn_text: str, depth: int = DEFAULT_DEPTH, stockfish_path: str 
         focus_user = black_player
     if focus_user.lower() == white_player.lower():
         focus_side_is_white = True
-        focus_side_name = "白"
     else:
         focus_side_is_white = False
-        focus_side_name = "黑"
 
     print("=" * 58)
     print(f"  🏁 {white} (⚪) vs {black} (⚫)  —  {result}")
     print(f"  📁 {opening}")
     print(f"  ⏱️  {tc}  |  共 {total//2} 步")
     if focus_user:
-        print(f"  🎯 分析目标：{focus_user}（{focus_side_name}方）")
+        focus_side_label = "白" if focus_side_is_white else "黑"
+        print(f"  🎯 分析目标：{focus_user}（{focus_side_label}方）")
     print("=" * 58)
     print(f"\n📈 局面评估走势（depth={depth}）：")
     print(f"{'步':>5} {'着法':>10}  {'评估':>12}  {'趋势'}")
@@ -174,13 +173,14 @@ def analyze_game(pgn_text: str, depth: int = DEFAULT_DEPTH, stockfish_path: str 
     prev_board = None
     mistakes = []
     blunders = []
+    evaluations = []
 
     # 两遍扫描：第一遍记录失误，第二遍用引擎求最佳着法
     # 第一遍：只评估，不求最佳着法（节省时间）
     for i, node in enumerate(nodes):
         board = node.board()
         move_no = (i // 2) + 1
-        side = "白" if i % 2 == 0 else "黑"
+        side = "white" if i % 2 == 0 else "black"
         san = node.san()
 
         try:
@@ -194,10 +194,27 @@ def analyze_game(pgn_text: str, depth: int = DEFAULT_DEPTH, stockfish_path: str 
         ev_str = fmt_score(pov_score)
         icon = eval_icon(pov_score)
 
-        marker = ""
-        is_focus_move = (side == focus_side_name)
+        # 记录评估（用于后续 infographic）
+        cp = cp_score(pov_score)
+        is_focus_move = (side == ("white" if focus_side_is_white else "black"))
+        is_blunder = False
+        is_mistake = False
         if prev_score is not None:
-            drop = cp_score(prev_score) - cp_score(pov_score)
+            drop = cp_score(prev_score) - cp
+            is_blunder = drop > 1.0 and is_focus_move
+            is_mistake = 0.3 < drop <= 1.0 and is_focus_move
+        evaluations.append({
+            "move_no": move_no,
+            "side": side,
+            "san": san,
+            "eval": round(cp, 2),
+            "is_blunder": is_blunder,
+            "is_mistake": is_mistake
+        })
+
+        marker = ""
+        if prev_score is not None:
+            drop = cp_score(prev_score) - cp
             if drop > 1.0:
                 marker = "💥 BLUNDER"
                 if is_focus_move:
@@ -221,7 +238,7 @@ def analyze_game(pgn_text: str, depth: int = DEFAULT_DEPTH, stockfish_path: str 
                         "node_idx": i - 1,
                     })
 
-        print(f"{move_no:>4}.{side:<3} {san:>10}  {icon}{ev_str:>12}  {marker}")
+        print(f"{move_no:>4}.{'白' if side == 'white' else '黑':<3} {san:>10}  {icon}{ev_str:>12}  {marker}")
 
         prev_score = pov_score
         prev_board = board
@@ -314,7 +331,7 @@ def analyze_game(pgn_text: str, depth: int = DEFAULT_DEPTH, stockfish_path: str 
                           "eval_drop": m["drop"], "best_move": m.get("best_move", "?"),
                           "best_score": m.get("best_score", "?"), "pv_line": m.get("pv_line", [])}
                         for m in mistakes]
-        export_engine_eval(game_id, depth, [], eval_blunders, eval_mistakes,
+        export_engine_eval(game_id, depth, evaluations, eval_blunders, eval_mistakes,
                           output_path / "engine_eval.json")
 
         # Export metadata.json
