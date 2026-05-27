@@ -15,6 +15,7 @@ import chess.engine
 import chess.pgn
 import io
 from pathlib import Path
+from json_exporter import export_game_data, export_engine_eval, export_metadata
 
 DEFAULT_DEPTH = 16
 DEFAULT_STOCKFISH_PATH = "/opt/homebrew/bin/stockfish"
@@ -125,7 +126,7 @@ def get_engine_best_move(engine, board, depth):
     return None, None, None, []
 
 
-def analyze_game(pgn_text: str, depth: int = DEFAULT_DEPTH, stockfish_path: str = None, focus_user: str = None):
+def analyze_game(pgn_text: str, depth: int = DEFAULT_DEPTH, stockfish_path: str = None, focus_user: str = None, output_dir: str = None):
     engine_path = find_stockfish(stockfish_path)
     engine = chess.engine.SimpleEngine.popen_uci(engine_path)
 
@@ -275,6 +276,61 @@ def analyze_game(pgn_text: str, depth: int = DEFAULT_DEPTH, stockfish_path: str 
         print("   无")
 
     print(f"\n🎯 开局：{opening}")
+
+    # Export JSON if output_dir specified
+    if output_dir:
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        # Prepare moves list for pgn.json
+        moves_list = []
+        for i, node in enumerate(nodes):
+            move_no = (i // 2) + 1
+            side = "white" if i % 2 == 0 else "black"
+            moves_list.append({
+                "move_no": move_no,
+                "side": side,
+                "san": node.san(),
+                "fen": node.board().fen()
+            })
+
+        # Export pgn.json
+        pgn_data = {
+            "white": white,
+            "black": black,
+            "result": result,
+            "opening": opening,
+            "moves": moves_list
+        }
+        game_id = headers.get("GameId", "unknown")
+        export_game_data(game_id, pgn_data, output_path)
+
+        # Export engine_eval.json
+        eval_blunders = [{"move_no": b["move_no"], "side": b["side"], "san": b["san"],
+                          "eval_drop": b["drop"], "best_move": b.get("best_move", "?"),
+                          "best_score": b.get("best_score", "?"), "pv_line": b.get("pv_line", [])}
+                         for b in blunders]
+        eval_mistakes = [{"move_no": m["move_no"], "side": m["side"], "san": m["san"],
+                          "eval_drop": m["drop"], "best_move": m.get("best_move", "?"),
+                          "best_score": m.get("best_score", "?"), "pv_line": m.get("pv_line", [])}
+                        for m in mistakes]
+        export_engine_eval(game_id, depth, [], eval_blunders, eval_mistakes,
+                          output_path / "engine_eval.json")
+
+        # Export metadata.json
+        metadata = {
+            "game_id": game_id,
+            "white": white,
+            "black": black,
+            "result": result,
+            "date": headers.get("Date", ""),
+            "time_control": tc,
+            "opening": opening
+        }
+        export_metadata(metadata, output_path / "metadata.json")
+
+        print(f"\nJSON exported to {output_path}")
+
     print("\n💡 关键局面 FEN（失误前局面）：")
 
     key_indices = set()
@@ -298,6 +354,7 @@ if __name__ == "__main__":
     depth = DEFAULT_DEPTH
     stockfish_path = None
     focus_user = None  # 目标棋手，默认分析黑方（由用户指定）
+    output_dir = None
 
     args = sys.argv[1:]
     if not args:
@@ -320,6 +377,9 @@ if __name__ == "__main__":
         elif args[i] == "--focus-user":
             focus_user = args[i + 1]
             i += 2
+        elif args[i] == "--output-dir":
+            output_dir = args[i + 1]
+            i += 2
         else:
             if args[i].startswith("-"):
                 try:
@@ -336,7 +396,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     try:
-        analyze_game(pgn_input, depth, stockfish_path, focus_user)
+        analyze_game(pgn_input, depth, stockfish_path, focus_user, output_dir)
     except Exception as ex:
         print(f"错误：{ex}", file=sys.stderr)
         import traceback
