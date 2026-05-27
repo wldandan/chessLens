@@ -60,12 +60,12 @@ def generate_social_copy(game_data: dict, engine_eval: dict, focus_user: str = D
     # 提取本方亮点（只看 focus_user 的妙着）
     my_highlights = _extract_my_highlights(evaluations, focus_side)
 
-    # 取最重要的 2 个失误（只取 focus_user 的）
+    # 取最重要的 3 个失误（只取 focus_user 的）
     my_errors = sorted(
         [e for e in blunders + mistakes if e.get("side") == focus_side],
         key=lambda x: x.get("eval_drop", 0),
         reverse=True
-    )[:2]
+    )[:3]
 
     # 检查是否有绝杀机会被错过
     has_missed_checkmate = any("#" in e.get("best_move", "") or "MATE" in str(e.get("best_score", ""))
@@ -102,7 +102,7 @@ def generate_social_copy(game_data: dict, engine_eval: dict, focus_user: str = D
     # 失误回顾（戏剧化但不打击）
     if my_errors:
         lines.append("## 💡 本局可以更好的地方")
-        for err in my_errors[:2]:
+        for err in my_errors[:3]:
             drop = err.get("eval_drop", 0)
             # 戏剧化描述失误
             if drop > 10:
