@@ -42,6 +42,10 @@ skill 执行后会输出三个 JSON 文件到 `data/{date}_{game_id}/` 目录：
 - `engine_eval.json` — Stockfish 评估数据（失误列表、评估值、错失速杀）
 - `metadata.json` — 游戏元数据（日期、对手、结果、评级）
 
+**人类可读复盘文档（review.md）** 按 `ANALYSIS_TEMPLATE.md`（同目录，与 `templates/ANALYSIS_TEMPLATE.md` 同步）生成：
+该模板规定了评估口径（白方视角）、失误按 `eval_drop` 倒序、`missed_wins` 单独叙事等铁律，
+撰写复盘前**必先读模板**，一切数值以三个 JSON 为准，不要臆测。
+
 **示例调用：**
 ```bash
 python3 scripts/analyze.py --pgn-file game.pgn --output-dir data/2026-05-25_169159534058/
