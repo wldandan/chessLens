@@ -1,7 +1,7 @@
 ---
 name: chess-xhs-post
-description: 为 ChessLens 赛后复盘生成小红书帖子图片素材（6张图排版）
-version: '1.0.0'
+description: 为 ChessLens 赛后复盘生成小红书帖子图片素材（封面+昏着卡+错失速杀+结果原图）。棋手为未成年人，全程匿名（不露 chess.com 账号/真名，结果截图打码）。
+version: '1.1.0'
 user-invocable: true
 allowed-tools:
   - Read
@@ -16,18 +16,37 @@ allowed-tools:
 
 ## 概述
 
-自动为 ChessLens 赛后复盘生成小红书帖子，包含固定 6 张图排版。
+自动为 ChessLens 赛后复盘生成小红书帖子。标准排版 5 张图：封面（合并打码实战战绩）+ 三张昏着卡 + 错失速杀卡。
 
-## 6 张图排版
+## 图片排版（封面 + 3 昏着 + 错失速杀 + 结果原图）
 
 | 序号 | 位置 | 文件名 | 内容描述 |
 |------|------|--------|----------|
-| 1 | 开头/引入 | `xhs_02.jpg` | 金句："下棋不复盘，等于没下过" |
-| 2 | 全局分析 | `xhs_01.jpg` | 完整对局复盘报告 |
-| 3 | 失误 TOP1 | `blunder_card_top1.png` | 按 engine_eval.json `eval_drop` 倒序，丢分最大 |
-| 4 | 失误 TOP2 | `blunder_card_top2.png` | 丢分第二 |
-| 5 | 失误 TOP3 | `blunder_card_top3.png` | 丢分第三 |
-| 6 | 结尾号召 | `xhs_00.jpg` + `xhs_cover.jpg` | 情感收尾 + ChessLens品牌宣传 |
+| 1 | 封面（合并战绩）| `01_cover.png` | 标题钩子 + **嵌入打码的 chess.com 实战快照**（带「执白胜 1-0」横幅/印章）+ 底部悬念。首图即钩子+战绩证明，匿名 |
+| 2 | 失误 TOP1 | `02_blunder_top1_*.png` | 按 engine_eval.json `eval_drop` 倒序，丢分最大 |
+| 3 | 失误 TOP2 | `03_blunder_top2_*.png` | 丢分第二 |
+| 4 | 失误 TOP3 | `04_blunder_top3_*.png` | 丢分第三 |
+| 5 | 错失速杀 | `05_missed_win_*.png` | 取自 `missed_wins`，紫色卡，**单独叙事，非昏着**（无则省略）|
+
+> **封面合并战绩**：把打码后的 chess.com 实战快照嵌进封面中段（避免封面留白、首图即给社会证明），
+> 比"封面 + 单独结果图"两张分开更紧凑、冲击力更强。实战图处理见 Step 4，胜负要**明确标注**
+> （绿色横幅「执白胜 · 对手弃局 1-0」+「1-0 白胜」印章）——因为 chess.com 的 *game abandoned* 画面本身看不出谁赢。
+> 文件名带 `*` 处填步数+着法（如 `02_blunder_top1_m20_Re3.png`），便于核对。
+> 输出统一放 `output/{date}_{game_id}/post/` + `images/xhs/`，配文 `post/caption.txt`。
+
+## 🔒 隐私与匿名规则（铁律，针对未成年棋手）
+
+棋手 Aaron 为未成年人，**所有对外素材一律匿名**，违反即返工：
+
+1. **不露任何 chess.com 账号**：封面/卡片不写 `aaronwang2026`、对手 `itsbishara` 等用户名，
+   一律用「执白 / 执黑 / 对手」代称。对局信息只保留开局名、结果、日期。
+2. **不露真名**：卡片署名/footer 只用品牌 **`ChessLens`**，**不要**出现「Aaron」「Aaron 的棋」等真实名字。
+3. **文案标签同步**：`caption.txt` 不带 `#aaronwang2026` 之类账号标签；正文不点名双方账号。
+4. **chess.com 结果原图必须打码**：截图自带双方头像 + 用户名 + 评分 + 左侧登录账号，
+   直接用会泄露身份。处理步骤见下方「Step 4: 结果原图匿名化」，
+   要点：**裁掉左侧账号栏 + 上下两条玩家信息条整条打码（头像/用户名/国旗/评分全遮）**。
+
+> 口诀：**对外只认 ChessLens，不认人。** 品牌靠 IP，不靠真名。
 
 ## 关键规则
 
@@ -59,18 +78,19 @@ allowed-tools:
 
 ### Step 1: 准备素材目录
 
-从对局 output 目录的 `images/xhs/` 中取用已有素材，或生成新的 blunder card。
+从对局 output 目录取用棋盘图，或用 `generate_blunder_images.py` 重新生成。
 
-目标目录结构：
+目标目录结构（成品 + 配文）：
 ```
-output/{game_date}_{game_id}/images/xhs/
-├── xhs_00.jpg
-├── xhs_01.jpg
-├── xhs_02.jpg
-├── xhs_cover.jpg
-├── blunder_card_top1.png
-├── blunder_card_top2.png
-└── blunder_card_top3.png
+output/{game_date}_{game_id}/
+├── post/                          # 发布用，按序号排好
+│   ├── 01_cover.png               # 封面 + 嵌入打码实战快照（执白胜 1-0）
+│   ├── 02_blunder_top1_*.png
+│   ├── 03_blunder_top2_*.png
+│   ├── 04_blunder_top3_*.png
+│   ├── 05_missed_win_*.png        # 有 missed_wins 才出
+│   └── caption.txt
+└── images/xhs/                    # 镜像一份
 ```
 
 ### Step 2: 从 engine_eval.json 提取 TOP-N 昏着
@@ -138,7 +158,7 @@ img_correct.save('/tmp/blunder_N_correct.png')
 - Header: `关键失误 · TOP N`（橙色标签）
 - 左侧列：`{步数}`大字 + 错误着法（红）+ 正确着法（绿）+ 损失值
 - 右侧列：两个 board-card（错误/正确棋盘图）
-- 底部：翠绿解释框 + `Powered by ChessLens AI`
+- 底部：footer 署名只用 **`ChessLens`**（**禁**出现真名「Aaron」/账号）
 
 #### 3.3 截图生成 PNG
 
@@ -147,19 +167,42 @@ cd ~/.claude/skills/ljg-card
 node assets/capture.js /tmp/blunder_card_N.html /path/to/output/blunder_card_topX.png 1080 1440 fullpage
 ```
 
-### Step 4: 输出到 xhs 目录
+### Step 4: 结果原图匿名化（chess.com 截图）
 
-将 6 张图统一放到对局的 xhs 子目录：
+chess.com 对局结束截图（如 `images/board.png`）自带**双方头像 + 用户名 + 评分 + 左侧登录账号**，
+**绝不能原样发布**。用 PIL 处理后再包成品牌结果卡：
+
+```python
+from PIL import Image, ImageFilter, ImageDraw
+im = Image.open("images/board.png").convert("RGB")  # 例：1280x757
+def redact(box):                                     # 模糊+实色遮盖，文字彻底消失
+    im.paste(im.crop(box).filter(ImageFilter.GaussianBlur(12)), box[:2])
+    ImageDraw.Draw(im).rectangle(box, fill=(38, 36, 33))  # 匹配 chess.com 深色背景
+redact((232, 0,   772, 48))    # 顶部玩家信息条：头像/用户名/国旗/评分 整条遮
+redact((232, 596, 772, 650))   # 底部玩家信息条：同上
+im.crop((232, 0, 772, 652)).save("/tmp/result_clean.png")  # 裁掉左侧登录账号栏 + 右侧广告
 ```
-output/{game_date}_{game_id}/images/xhs/
-```
 
-## 文案建议
+> 坐标按截图分辨率微调；核心是**两条玩家条整条打码 + 裁掉左侧账号栏**，
+> 保留棋盘 + "game abandoned/checkmate" 弹窗即可。
+>
+> **打码后的快照嵌入封面（01_cover）中段**：用 HTML 叠层加绿色横幅「🏆 执白胜 · 对手弃局 1-0」+
+> 右下「1-0 白胜」印章——因为 chess.com 的 *game abandoned* 画面本身看不出谁赢，**必须显式标注胜负**。
+> 卡内文字一律用「执白 / 执黑 / 对手」，footer 只写 `ChessLens`。
+> （中文叠字用 HTML/CSS，**不要**用 PIL 画中文——PIL 默认字体不支持中文会报 latin-1 编码错。）
 
-**帖子标题**: `#国际象棋 #棋类复盘 #ChessLens #aaronwang2026`
+### Step 5: 输出到 post / xhs 目录
 
-**正文**:
-复盘才能进步！今天这盘棋赢得很险...
+将成品图按 `01_cover` → `06_result` 顺序放入 `output/{date}_{game_id}/post/`，
+同时镜像一份到 `images/xhs/`，并写 `post/caption.txt`。
+
+## 文案建议（caption.txt）
+
+**话题标签**: `#国际象棋 #棋局复盘 #chess #国象 #象棋复盘 #ChessLens`
+（⚠️ **不带** `#aaronwang2026` 等账号标签；正文也不点名双方账号——见隐私铁律）
+
+**正文结构**：标题钩子 → 一句话背景+悬念 → TOP 失误清单（数值对齐 engine_eval.json）
+→ 错失速杀科普 → 价值升华（「下棋不复盘=没下过」）→ 互动提问。
 
 ---
 *Powered by ChessLens AI*
