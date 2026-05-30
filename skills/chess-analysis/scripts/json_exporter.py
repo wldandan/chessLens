@@ -10,14 +10,19 @@ def export_game_data(game_id: str, pgn_data: dict, output_dir: Path):
         json.dump({"game_id": game_id, **pgn_data}, f, ensure_ascii=False, indent=2)
 
 def export_engine_eval(game_id: str, depth: int, evaluations: list,
-                       blunders: list, mistakes: list, output_path: Path):
-    """Export engine evaluation to engine_eval.json."""
+                       blunders: list, mistakes: list, output_path: Path,
+                       missed_wins: list = None):
+    """Export engine evaluation to engine_eval.json.
+
+    missed_wins: 「错失速杀」着法（原本可将杀但仍完胜），与昏着分开，避免误导排序。
+    """
     data = {
         "game_id": game_id,
         "depth": depth,
         "evaluations": evaluations,
         "blunders": blunders,
-        "mistakes": mistakes
+        "mistakes": mistakes,
+        "missed_wins": missed_wins or []
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:

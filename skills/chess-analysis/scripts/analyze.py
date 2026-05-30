@@ -20,6 +20,14 @@ from json_exporter import export_game_data, export_engine_eval, export_metadata
 DEFAULT_DEPTH = 16
 DEFAULT_STOCKFISH_PATH = "/opt/homebrew/bin/stockfish"
 
+# 评估钳制阈值（兵）：超过此值的局面视为「决定性领先」，丢分计算时一律按此封顶。
+# 作用：避免「原本将杀(+1000) → 走完仍 +8 完胜」被算成丢上百兵的假昏着。
+EVAL_CLAMP = 10.0
+# cp_score 用此哨兵值表示将杀（白方视角 ±1000）。
+MATE_SENTINEL = 1000.0
+# 「错失速杀」判定：原本将杀、走完不再是杀，但走子方仍达此领先（兵）即算「仍完胜」。
+WIN_THRESHOLD = 3.0
+
 
 def find_stockfish(stockfish_path=None):
     if stockfish_path and Path(stockfish_path).exists():
@@ -93,10 +101,50 @@ def eval_icon(pov_score: chess.engine.PovScore) -> str:
 
 
 def cp_score(pov_score: chess.engine.PovScore) -> float:
-    rs = pov_score.relative
-    if rs.is_mate():
-        return 1000.0 if rs.mate() > 0 else -1000.0
-    return rs.score() / 100.0
+    """局面评估，统一为白方视角（正=白优，负=黑优），与轮到谁走无关。
+
+    注意：引擎 analyse 的局面是「走完棋之后」，轮到对方走，
+    因此 pov_score.relative 是对方视角。必须用 .white() 归一到白方视角，
+    否则评估符号会逐步翻转，并导致丢分（drop）计算把相反视角的两数相减。
+    """
+    ws = pov_score.white()
+    if ws.is_mate():
+        return 1000.0 if ws.mate() > 0 else -1000.0
+    return ws.score() / 100.0
+
+
+def centipawn_loss(prev_cp_white: float, cur_cp_white: float, side: str,
+                   clamp: float = EVAL_CLAMP) -> float:
+    """走子方因这一步实际葬送的分值（兵），正=局面变差。
+
+    输入均为白方视角评估：
+    - 白方走子：白方视角下降即损失 → prev - cur
+    - 黑方走子：白方视角上升即黑方损失 → cur - prev
+
+    对决定性优势做钳制（默认 ±10 兵）：两端评估先封顶再相减。
+    这样「原本将杀(+1000) → 走完仍 +8 完胜」只算丢 2 兵，
+    而不是丢 992 兵的误导性数字——错失速杀 ≠ 葬送胜势。
+    """
+    prev_c = max(-clamp, min(clamp, prev_cp_white))
+    cur_c = max(-clamp, min(clamp, cur_cp_white))
+    delta_white = cur_c - prev_c
+    return -delta_white if side == "white" else delta_white
+
+
+def is_missed_mate(prev_cp_white: float, cur_cp_white: float, side: str,
+                   win_threshold: float = WIN_THRESHOLD) -> bool:
+    """走子方原本有将杀，走完后不再是将杀但仍决定性领先 → 「错失速杀」。
+
+    用于把「错过更快的杀棋（但依旧完胜）」与「真正葬送胜势」区分开，
+    前者不应被当作昏着上榜，应单独叙事。
+    """
+    if side == "white":
+        had_mate = prev_cp_white >= MATE_SENTINEL
+        still_winning = cur_cp_white < MATE_SENTINEL and cur_cp_white >= win_threshold
+    else:
+        had_mate = prev_cp_white <= -MATE_SENTINEL
+        still_winning = cur_cp_white > -MATE_SENTINEL and cur_cp_white <= -win_threshold
+    return had_mate and still_winning
 
 
 def get_engine_best_move(engine, board, depth):
@@ -173,6 +221,7 @@ def analyze_game(pgn_text: str, depth: int = DEFAULT_DEPTH, stockfish_path: str 
     prev_board = None
     mistakes = []
     blunders = []
+    missed_wins = []
     evaluations = []
 
     # 两遍扫描：第一遍记录失误，第二遍用引擎求最佳着法
@@ -199,44 +248,44 @@ def analyze_game(pgn_text: str, depth: int = DEFAULT_DEPTH, stockfish_path: str 
         is_focus_move = (side == ("white" if focus_side_is_white else "black"))
         is_blunder = False
         is_mistake = False
+        missed = False
+        marker = ""
         if prev_score is not None:
-            drop = cp_score(prev_score) - cp
-            is_blunder = drop > 1.0 and is_focus_move
-            is_mistake = 0.3 < drop <= 1.0 and is_focus_move
+            prev_cp = cp_score(prev_score)
+            drop = centipawn_loss(prev_cp, cp, side)
+            missed = is_missed_mate(prev_cp, cp, side) and is_focus_move
+            record = {
+                "move_no": move_no,
+                "side": side,
+                "san": san,
+                "drop": drop,
+                "board_before": prev_board,
+                "node_idx": i - 1,
+            }
+            if missed:
+                # 错失速杀:仍完胜,不当昏着上榜,单独标记
+                marker = "🕒 MISSED WIN"
+                missed_wins.append(record)
+            elif drop > 1.0:
+                marker = "💥 BLUNDER"
+                if is_focus_move:
+                    is_blunder = True
+                    blunders.append(record)
+            elif drop > 0.3:
+                marker = "⚠️ MISTAKE"
+                if is_focus_move:
+                    is_mistake = True
+                    mistakes.append(record)
+
         evaluations.append({
             "move_no": move_no,
             "side": side,
             "san": san,
             "eval": round(cp, 2),
             "is_blunder": is_blunder,
-            "is_mistake": is_mistake
+            "is_mistake": is_mistake,
+            "missed_mate": missed
         })
-
-        marker = ""
-        if prev_score is not None:
-            drop = cp_score(prev_score) - cp
-            if drop > 1.0:
-                marker = "💥 BLUNDER"
-                if is_focus_move:
-                    blunders.append({
-                        "move_no": move_no,
-                        "side": side,
-                        "san": san,
-                        "drop": drop,
-                        "board_before": prev_board,
-                        "node_idx": i - 1,
-                    })
-            elif drop > 0.3:
-                marker = "⚠️ MISTAKE"
-                if is_focus_move:
-                    mistakes.append({
-                        "move_no": move_no,
-                        "side": side,
-                        "san": san,
-                        "drop": drop,
-                        "board_before": prev_board,
-                        "node_idx": i - 1,
-                    })
 
         print(f"{move_no:>4}.{'白' if side == 'white' else '黑':<3} {san:>10}  {icon}{ev_str:>12}  {marker}")
 
@@ -250,7 +299,7 @@ def analyze_game(pgn_text: str, depth: int = DEFAULT_DEPTH, stockfish_path: str 
     print("🔍 正在用 Stockfish 计算推荐着法...")
     engine2 = chess.engine.SimpleEngine.popen_uci(engine_path)
     try:
-        all_errors = sorted(blunders + mistakes, key=lambda x: x["drop"], reverse=True)
+        all_errors = sorted(blunders + mistakes + missed_wins, key=lambda x: x["drop"], reverse=True)
         for err in all_errors:
             board_before = err["board_before"]
             if board_before is None:
@@ -289,6 +338,16 @@ def analyze_game(pgn_text: str, depth: int = DEFAULT_DEPTH, stockfish_path: str 
                 pv_str = " → ".join(m['pv_line'][:6])
                 print(f"      推荐变化：{pv_str}")
             print(f"      失误分析：第 {m['move_no']} 步走了 {m['san']}，这里有更好的选择，可以...（更好的走法能带来更好的局面发展）")
+    else:
+        print("   无")
+
+    print(f"\n\n🕒 错失速杀（原本可将杀，仍保持完胜，非昏着）：")
+    if missed_wins:
+        for w in sorted(missed_wins, key=lambda x: x["drop"], reverse=True):
+            print(f"\n   ⏱️ 第 {w['move_no']} 步（{w['side']}）：{w['san']}")
+            print(f"      速杀走法：{w['best_move']}（{w['best_score']}）— 局面仍完胜，只是错过更快的杀")
+            if w['pv_line']:
+                print(f"      杀棋变化：{' → '.join(w['pv_line'][:6])}")
     else:
         print("   无")
 
@@ -331,8 +390,12 @@ def analyze_game(pgn_text: str, depth: int = DEFAULT_DEPTH, stockfish_path: str 
                           "eval_drop": m["drop"], "best_move": m.get("best_move", "?"),
                           "best_score": m.get("best_score", "?"), "pv_line": m.get("pv_line", [])}
                         for m in mistakes]
+        eval_missed_wins = [{"move_no": w["move_no"], "side": w["side"], "san": w["san"],
+                             "eval_drop": w["drop"], "best_move": w.get("best_move", "?"),
+                             "best_score": w.get("best_score", "?"), "pv_line": w.get("pv_line", [])}
+                            for w in missed_wins]
         export_engine_eval(game_id, depth, evaluations, eval_blunders, eval_mistakes,
-                          output_path / "engine_eval.json")
+                          output_path / "engine_eval.json", missed_wins=eval_missed_wins)
 
         # Export metadata.json
         metadata = {

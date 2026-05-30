@@ -39,7 +39,7 @@ description: >
 skill 执行后会输出三个 JSON 文件到 `data/{date}_{game_id}/` 目录：
 
 - `pgn.json` — 结构化棋谱（着法序列、FEN）
-- `engine_eval.json` — Stockfish 评估数据（失误列表、评估值）
+- `engine_eval.json` — Stockfish 评估数据（失误列表、评估值、错失速杀）
 - `metadata.json` — 游戏元数据（日期、对手、结果、评级）
 
 **示例调用：**
@@ -48,6 +48,40 @@ python3 scripts/analyze.py --pgn-file game.pgn --output-dir data/2026-05-25_1691
 ```
 
 **幂等性：** 若 `data/{game_id}/metadata.json` 已存在，skill 会跳过该对局的分析（无需重复处理）。
+
+### engine_eval.json 字段
+
+```jsonc
+{
+  "evaluations": [ { "move_no", "side", "san", "eval", "is_blunder", "is_mistake", "missed_mate" } ],
+  "blunders":    [ { "move_no", "side", "san", "eval_drop", "best_move", "best_score", "pv_line" } ],
+  "mistakes":    [ ... 同上 ... ],
+  "missed_wins": [ ... 同上：原本可将杀但仍完胜，单独列，不计入昏着 ... ]
+}
+```
+
+下游（asset-generator/封面/卡片）排 TOP 失误时 **必须按 `eval_drop` 倒序排**（丢分越大越靠前），
+且 **`missed_wins` 不要和 `blunders` 混排**——错失速杀要单独叙事，不能当昏着上榜。
+
+## ⚠️ 评估语义与历史陷阱（务必遵守，否则内容会全错）
+
+分析输出曾因两个 bug 产出**完全反转的错误叙事**，已修复并有回归测试
+`scripts/test_eval_sign.py` 守护。改 `analyze.py` 评估逻辑前必先读懂这两点：
+
+### 1. 评估一律白方视角，与轮到谁走无关
+`engine.analyse()` 评估的是「走完这步之后」的局面（轮到对方走），
+`pov_score.relative` 是**对方视角**，逐步翻转符号。
+必须用 `cp_score()`（内部走 `.white()`）归一到白方视角：正=白优，负=黑优。
+- 历史 bug：用了 `.relative` → 白方好棋被存成负分 → 残局完胜被误判成步步昏招（28 个假昏着）。
+
+### 2. 丢分计算必须按走子方 + 钳制决定性优势
+- `centipawn_loss(prev, cur, side)`：白方走子丢分 = `prev - cur`；黑方走子丢分 = `cur - prev`。
+- **将杀哨兵陷阱**：`cp_score` 用 `±1000` 表示将杀。若直接相减，
+  「原本将杀(+1000) → 走完仍 +8 完胜」会算成丢 **992 兵**的假昏着，标题会严重误导。
+- 解决：`centipawn_loss` 对两端评估先钳制到 `±EVAL_CLAMP`（10 兵）再相减；
+  并用 `is_missed_mate()` 把「错失速杀但仍完胜」单独归入 `missed_wins`，不计昏着。
+
+**判断口诀：** 错失速杀（仍完胜）≠ 葬送胜势。前者是「错过更快的杀」，后者才是昏着。
 
 ## 响应规则
 
@@ -67,8 +101,9 @@ chess-analysis/scripts/analyze.py
 
 **功能：**
 - 解析完整 PGN 棋谱
-- 使用 Stockfish 评估每步局面（默认深度 16，可配置）
-- 检测失误（>0.3 兵下跌）和昏着（>1.0 兵下跌）
+- 使用 Stockfish 评估每步局面（默认深度 16，可配置），统一白方视角
+- 检测失误（>0.3 兵下跌）和昏着（>1.0 兵下跌），丢分按走子方计算并钳制决定性优势
+- 单独识别「错失速杀」（原本可将杀但仍完胜，不计昏着）
 - 彩色编码评估时间线
 - 结构化输出：开局识别、FEN 局面、逐步评分
 
@@ -111,4 +146,4 @@ python3 chess-analysis/scripts/analyze.py "$PGN" 20 --stockfish-path /custom/pat
 
 ---
 
-*版本：v2.2 | 失误分析增强版：含变化路线 + 详细原因分析 | 更新：2026-04-21*
+*版本：v2.3 | 评估符号统一白方视角 + 丢分按走子方 + 将杀钳制/错失速杀分离 + 回归测试 test_eval_sign.py | 更新：2026-05-30*
