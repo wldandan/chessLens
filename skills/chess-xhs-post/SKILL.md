@@ -1,7 +1,7 @@
 ---
 name: chess-xhs-post
 description: 为 ChessLens 赛后复盘生成小红书帖子图片素材（封面+昏着卡+错失速杀+结果原图）。棋手为未成年人，全程匿名（不露 chess.com 账号/真名，结果截图打码）。
-version: '1.1.0'
+version: '1.2.0'
 user-invocable: true
 allowed-tools:
   - Read
@@ -195,6 +195,30 @@ im.crop((232, 0, 772, 652)).save("/tmp/result_clean.png")  # 裁掉左侧登录�
 
 将成品图按 `01_cover` → `06_result` 顺序放入 `output/{date}_{game_id}/post/`，
 同时镜像一份到 `images/xhs/`，并写 `post/caption.txt`。
+
+### Step 6: 发布到小红书（agent-browser 半自动）
+
+用 `scripts/publish_xhs.sh` 把 `post/` 整套发到小红书创作服务平台：
+
+```bash
+scripts/publish_xhs.sh output/{date}_{game_id}/post/
+```
+
+脚本会：登录态检查 → 切「上传图文」→ 按序号上传 `NN_*.png` → 填标题(caption 第1行)
++ 正文(第3行起，含话题标签) → 截图留证，**停在「发布」前**（绝不自动点发布，由人确认）。
+
+**agent-browser 发布踩坑（务必记住，已固化进脚本）**：
+
+1. **独立浏览器实例**：agent-browser 不是用户日常的 Chrome，需**自己登录一次**。
+   用固定 `--session-name xhs` 持久化登录态；未登录时脚本会开有头浏览器让你扫码/验证码登录，
+   登录后重跑即可。`--auto-connect` 接管用户 Chrome 常报 401，不可靠。
+2. **上传文件别用 `@ref`**：切 tab / DOM 变动后 ref 立即失效，报
+   `CDP error (DOM.describeNode): Object id doesn't reference a Node`。
+   **直接用 CSS 选择器 `input[type=file]` 上传**才稳：
+   `agent-browser --session-name xhs upload "input[type=file]" 01.png 02.png ...`（一次可传多张，顺序即图序）。
+3. **标题/正文框 ref 会变**：每次操作前重新 `snapshot -i` 取 ref。标题框占位符是「填写标题会有更多赞哦」；
+   正文框是标题之后第一个无名 textbox（避开「添加地点/选择群聊」的嵌套 textbox）。
+4. **铁律：永远停在发布前**。脚本不点最终「发布」，人工核对预览截图后再手动点。
 
 ## 文案建议（caption.txt）
 
