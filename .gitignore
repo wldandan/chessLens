@@ -1,15 +1,16 @@
-# Built site output — CI (deploy.yml) regenerates from docs/reviews/docs/*.md
+# Built site output — CI (deploy.yml) regenerates from games/*/*.md into docs/
 /docs/*.html
+/docs/img/
 
-# Local-only video artifacts (not used by the site, ~8MB)
-docs/reviews/videos/
+# Local-only / regenerable per-game video artifacts (~MBs)
+games/*/*.mp4
 
 # Python / OS cruft
 __pycache__/
 *.pyc
 .DS_Store
 
-# Local build dir (review-repo legacy)
+# Legacy local build dir
 /_site/
 
 # Sensitive

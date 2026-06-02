@@ -6,7 +6,7 @@ set -e
 # 单仓（chessLens）：复盘 md 直接落在 docs/reviews/docs/，CI 负责构建 html。
 # 仓库根从脚本位置推导（skills/chess-analysis/scripts/ → 三级上）。
 GIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-REVIEWS_DIR="$GIT_DIR/docs/reviews/docs"
+GAMES_DIR="$GIT_DIR/games"   # 每盘一个目录 games/{date}_{opp}_{id}/
 AUTHOR_NAME="aaronwang2026 Analyst"
 AUTHOR_EMAIL="5109343@qq.com"
 
@@ -52,7 +52,7 @@ validate_review_format() {
 }
 
 echo "Validating format of new/changed md files..."
-for f in docs/reviews/docs/*.md; do
+for f in games/*/*.md; do
     if [ -f "$f" ]; then
         if ! validate_review_format "$f"; then
             echo ""
@@ -79,7 +79,7 @@ INTERVAL=10
 elapsed=0
 
 # 取最新文件的文件名（不含扩展名），提取对手名用于验证
-latest_file=$(ls -t "$REVIEWS_DIR"/*.md 2>/dev/null | head -1)
+latest_file=$(ls -t "$GAMES_DIR"/*/*.md 2>/dev/null | head -1)
 if [ -z "$latest_file" ]; then
     echo "No review file found, skipping verification"
     exit 0

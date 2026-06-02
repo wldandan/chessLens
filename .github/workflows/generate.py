@@ -2,20 +2,24 @@
 """Generate static HTML site from markdown files."""
 
 import os
+import glob
+import shutil
 import mistune
 from datetime import datetime
 import time
 
-SRC_DIR = 'docs/reviews/docs'
+# Single-repo layout: each game has its own dir games/{date}_{opponent}_{id}/
+# containing the review .md + images (+ json/xhs). Site is built into docs/ (CI artifact).
+GAMES_DIR = 'games'
 OUTPUT_DIR = 'docs'
+IMG_OUT = os.path.join(OUTPUT_DIR, 'img')  # board images copied here so Pages can serve them
 
 def get_md_files():
-    """Get all markdown files in docs/ directory."""
+    """Return full paths to each game's review markdown (games/*/*.md)."""
     files = []
-    if os.path.exists(SRC_DIR):
-        for f in sorted(os.listdir(SRC_DIR)):
-            if f.endswith('.md') and f != 'index.md':
-                files.append(f)
+    for path in sorted(glob.glob(os.path.join(GAMES_DIR, '*', '*.md'))):
+        if os.path.basename(path) != 'index.md':
+            files.append(path)
     return files
 
 def read_file(path):
@@ -32,10 +36,10 @@ def get_game_list():
     """Generate game list from markdown files."""
     import re
     games = []
-    for f in get_md_files():
-        # Filename format: {日期}_{game_id}_{白方}_{胜负}_{黑方}_{回合数}步}_{time_control}.md
-        # Example: 2026-04-14_167293652644_aaronwang2026_执白胜_Clement924810_19步_10+0.md
-        # Parts: ['2026-04-14', '167293652644', 'aaronwang2026', '执白胜', 'Clement924810', '19步', '10+0']
+    for path in get_md_files():
+        # path = games/{date}_{opp}_{id}/{date}_{game_id}_{白}_{胜负}_{黑}_{步}_{tc}.md
+        # 元数据仍从 md 文件名解析（文件名保留描述性格式）。
+        f = os.path.basename(path)
         basename = f.replace('.md', '')
         parts = basename.split('_')
 
@@ -84,7 +88,7 @@ def get_game_list():
         else:
             time_control = time_control_raw
 
-        content = read_file(os.path.join(SRC_DIR, f))
+        content = read_file(path)
 
         # Count highlights: "- **" OR numbered items OR "### 🚨" (sub-headers in blunder sections)
         # Start on ## 🎯 (template) OR ## 💥 (alternative format for opponent analysis)
@@ -157,8 +161,7 @@ def get_game_list():
                             continue
                 in_mistake = False
 
-        file_path = os.path.join(SRC_DIR, f)
-        analyze_time = get_file_mtime(file_path)
+        analyze_time = get_file_mtime(path)
 
         games.append({
             'date': date,
@@ -627,9 +630,11 @@ def generate_index_html():
 </html>"""
     return template
 
-def generate_game_html(filename):
-    """Generate HTML for a single game markdown file."""
-    md_content = read_file(os.path.join(SRC_DIR, filename))
+def generate_game_html(path):
+    """Generate HTML for a single game's review markdown (full path under games/)."""
+    filename = os.path.basename(path)
+    game_dir = os.path.dirname(path)
+    md_content = read_file(path)
 
     # Extract chess.com link if exists (line like 🔗 [Chess.com 对局链接](https://...))
     import re
@@ -660,21 +665,23 @@ def generate_game_html(filename):
     board_image_html = ''
     if game_id_match:
         game_id = game_id_match.group(2)
-        images_dir = os.path.join(os.path.dirname(SRC_DIR), 'images')
-        # Look for image with matching game_id
-        if os.path.exists(images_dir):
-            for img_file in os.listdir(images_dir):
-                if game_id in img_file and img_file.endswith('.png'):
-                    img_url = f"reviews/images/{img_file}"
-                    board_image_html = f'''
-            <img src="{img_url}" alt="棋局终局局面" class="board-image">
+        # Board image lives in the same game dir; prefer the bare终局 screenshot
+        # ({game_id}.png) over blunder/derived images. Copy it into docs/img/ so Pages serves it.
+        candidates = sorted(
+            p for p in glob.glob(os.path.join(game_dir, '*.png'))
+            if game_id in os.path.basename(p) and 'blunder' not in os.path.basename(p)
+        ) or sorted(glob.glob(os.path.join(game_dir, f'{game_id}.png')))
+        if candidates:
+            img_file = os.path.basename(candidates[0])
+            os.makedirs(IMG_OUT, exist_ok=True)
+            shutil.copy(candidates[0], os.path.join(IMG_OUT, img_file))
+            board_image_html = f'''
+            <img src="img/{img_file}" alt="棋局终局局面" class="board-image">
             <p class="board-image-caption">终局局面（点击查看 Chess.com 完整复盘）</p>
 '''
-                    break
 
     # Get analyze time from file modification time
-    file_path = os.path.join(SRC_DIR, filename)
-    analyze_time = get_file_mtime(file_path)
+    analyze_time = get_file_mtime(path)
 
     template = f"""<!DOCTYPE html>
 <html lang="zh-CN">
@@ -706,10 +713,10 @@ def main():
     with open(os.path.join(OUTPUT_DIR, 'index.html'), 'w', encoding='utf-8') as f:
         f.write(index_html)
 
-    for f in get_md_files():
-        html = generate_game_html(f)
-        output_path = os.path.join(OUTPUT_DIR, f.replace('.md', '.html'))
-        with open(output_path, 'w', encoding='utf-8') as out:
+    for path in get_md_files():
+        html = generate_game_html(path)
+        out_name = os.path.basename(path).replace('.md', '.html')
+        with open(os.path.join(OUTPUT_DIR, out_name), 'w', encoding='utf-8') as out:
             out.write(html)
 
     print(f"Generated site with {len(get_md_files()) + 1} pages in {OUTPUT_DIR}/")

@@ -1,7 +1,7 @@
 # 棋局复盘文件模板（review.md）
 
 > 本模板指导**每一盘将要分析的棋局**如何输出复盘文档。
-> 数据一律来自 `data/{date}_{game_id}/` 下三个 JSON，**不要手写/臆测数值**：
+> 数据一律来自 `games/{date}_{对手}_{id}/` 下三个 JSON，**不要手写/臆测数值**：
 > - `metadata.json` — 对局元数据（双方、结果、日期、时控、开局）
 > - `pgn.json` — 着法序列 + 每步 FEN
 > - `engine_eval.json` — Stockfish 评估（`evaluations` / `blunders` / `mistakes` / `missed_wins`）

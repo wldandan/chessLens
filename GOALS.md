@@ -74,7 +74,7 @@ mmx video 片尾（6秒 CTA） ← 每天 4 次额度，1-2 个视频的片头�
 
 - Skills 已在 Hermes 全局目录（chess-analysis、chess-game-history、chess-player-stats）
 - 新建 Hermes cron job（每天 7:00 UTC = 北京时间 15:00）
-- 数据路径：`docs/reviews/docs/`
+- 数据路径：`games/{date}_{对手}_{id}/`
 - 验证 pipeline 不断裂
 
 ### Phase 2：内容适配层（2-3周）
@@ -95,6 +95,6 @@ mmx video 片尾（6秒 CTA） ← 每天 4 次额度，1-2 个视频的片头�
 
 ## 现状（OpenClaw → Hermes 迁移中）
 
-- 现有复盘数据：20+ 对局在 `docs/reviews/docs/`
+- 现有复盘数据：20+ 对局在 `games/{date}_{对手}_{id}/`
 - OpenClaw cron job ID：`1eee27ab-515e-453d-b750-bb0af1c63e50`（待迁移）
 - Skills 已在全局：chess-analysis、chess-game-history、chess-player-stats

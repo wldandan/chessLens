@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ChessLens is Aaron Wang's (aaronwang2026) chess improvement system. It captures games from chess.com, performs AI-powered review using Stockfish, generates static HTML reports, and publishes them to GitHub Pages.
 
-**Data path** (single-repo): review markdown + images live in-repo at `docs/reviews/docs/` and `docs/reviews/images/`. CI (`deploy.yml`) builds `docs/*.html` from them. The former separate `chess-reviews-summary` repo has been merged in and retired.
+**Data path** (single-repo, per-game dirs): each game has its own dir `games/{date}_{opponent}_{id}/` holding the review `.md` + `engine_eval.json`/`pgn.json`/`metadata.json` + board images + `xhs/` (小红书 deck). CI (`deploy.yml`) runs `generate.py` to build the site into `docs/` (html + `docs/img/`, gitignored — never committed). The former separate `chess-reviews-summary` repo has been merged in and retired.
 
 ---
 
@@ -59,9 +59,8 @@ chess.com API / agent-browser
 - `skills/chess-game-history/` — game fetcher skill (chess.com API + agent-browser)
 - `skills/chess-player-stats/` — player stats skill (chess.com API)
 - `scripts/` — `make_video.py`, `make_cards.py`, `render_board.py`, `parse_review.py`, `generate_blunder_images.py`
-- `docs/reviews/docs/` — individual game review markdown files
-- `docs/reviews/images/` — chess.com board screenshots
-- `docs/reviews/videos/` — generated video files
+- `games/{date}_{opponent}_{id}/` — per-game dir: review `.md`, engine JSON, board images, `xhs/` deck, `*.mp4` (gitignored)
+- `docs/` — CI build output only (`index.html`, per-game `.html`, `img/`) — gitignored, never committed
 - `templates/ANALYSIS_TEMPLATE.md` — review doc template
 
 ### Review doc filename format

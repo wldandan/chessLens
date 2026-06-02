@@ -17,7 +17,7 @@ if [[ -z "$GAME_ID" ]]; then
 fi
 
 PAGES_BASE="https://wldandan.github.io/chessLens"
-SRC_DIR="docs/reviews/docs"
+GAMES_DIR="games"          # 每盘一个目录 games/{date}_{opp}_{id}/，内含 review .md
 OUT_DIR="docs"
 green() { printf '\033[32m✅ %s\033[0m\n' "$1"; }
 red()   { printf '\033[31m❌ %s\033[0m\n' "$1"; }
@@ -25,14 +25,14 @@ red()   { printf '\033[31m❌ %s\033[0m\n' "$1"; }
 echo "── 第1层：本地构建验证 ──"
 
 # 0. 源就位检查（防 generate.py 把首页清空再 push）
-src_count=$(find "$SRC_DIR" -maxdepth 1 -name '*.md' 2>/dev/null | wc -l | tr -d ' ' || true)
+src_count=$(find "$GAMES_DIR" -mindepth 2 -maxdepth 2 -name '*.md' 2>/dev/null | wc -l | tr -d ' ' || true)
 if [[ "$src_count" -eq 0 ]]; then
-  red "$SRC_DIR 为空 — 复盘 md 源未就位（应已 commit 在仓库内）。终止，避免清空首页。"
+  red "$GAMES_DIR/ 无复盘 md — 源未就位（应已 commit 在仓库内）。终止，避免清空首页。"
   exit 1
 fi
-green "源就位：$SRC_DIR 有 $src_count 个 md"
-if ! ls "$SRC_DIR"/*_"${GAME_ID}"_*.md >/dev/null 2>&1; then
-  red "源里找不到 game_id=$GAME_ID 的复盘 md（先跑 analyze.py 并同步到 $SRC_DIR）"
+green "源就位：$GAMES_DIR/ 有 $src_count 个 md"
+if ! ls "$GAMES_DIR"/*/*_"${GAME_ID}"_*.md >/dev/null 2>&1; then
+  red "源里找不到 game_id=$GAME_ID 的复盘 md（先跑 analyze.py 输出到 games/{date}_{opp}_{id}/）"
   exit 1
 fi
 green "源含本局 md"
