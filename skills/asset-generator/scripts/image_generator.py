@@ -203,12 +203,10 @@ def _create_thumbnail_placeholder(images_dir: Path):
 
 
 def write_board_screenshot(game_id: str, output_dir: Path):
-    """将棋盘截图复制到 output/images/board.png"""
-    possible_sources = [
-        Path(f"docs/reviews/images/{game_id}.png"),
-        Path(f"docs/reviews/images/{game_id.split('_')[1] if '_' in game_id else game_id}.png"),
-        Path(f"~/Projects/tutorials/leiw/chessLens/docs/reviews/images/{game_id}.png").expanduser(),
-    ]
+    """将棋盘截图复制到 output/images/board.png（单仓：图在 games/*/）"""
+    import glob
+    gid = game_id.split("_")[1] if "_" in game_id else game_id
+    possible_sources = [Path(p) for p in glob.glob(f"games/*/{gid}.png")]
 
     images_dir = output_dir / "images"
     images_dir.mkdir(parents=True, exist_ok=True)
@@ -227,9 +225,11 @@ def write_board_screenshot(game_id: str, output_dir: Path):
 
 
 def write_blunder_images(game_id: str, output_dir: Path):
-    """复制失误对比图"""
+    """复制失误对比图（单仓：图在 games/{date}_{opp}_{id}/）"""
+    import glob
     actual_game_id = game_id.split("_")[1] if "_" in game_id else game_id
-    images_dir = Path("docs/reviews/images")
+    matches = glob.glob(f"games/*_{actual_game_id}")
+    images_dir = Path(matches[0]) if matches else Path("games")
     output_images = output_dir / "images"
     output_images.mkdir(parents=True, exist_ok=True)
 

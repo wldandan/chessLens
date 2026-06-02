@@ -3,9 +3,11 @@
 
 set -e
 
-# 单仓（chessLens）：复盘 md 直接落在 docs/reviews/docs/，CI 负责构建 html。
+# 单仓（chessLens）：复盘 md 直接落在 games/{date}_{对手}_{id}/，CI 负责构建 html。
 # 仓库根从脚本位置推导（skills/chess-analysis/scripts/ → 三级上）。
-GIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+# chessLens 仓库根：优先环境变量 CHESSLENS_REPO，否则用绝对路径默认值。
+# （部署副本 ~/.agents 与仓库内副本通用——脚本位置不一定在仓库里。）
+GIT_DIR="${CHESSLENS_REPO:-$HOME/Projects/tutorials/leiw/chessLens}"
 GAMES_DIR="$GIT_DIR/games"   # 每盘一个目录 games/{date}_{opp}_{id}/
 AUTHOR_NAME="aaronwang2026 Analyst"
 AUTHOR_EMAIL="5109343@qq.com"

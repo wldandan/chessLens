@@ -13,19 +13,17 @@ description: >
 
 **默认用户**：若未指定用户名，则读取环境变量 `$CURRENT_CHESS_USER`；若环境变量也未设置，则默认 `aaronwang2026`。
 
-## 目录结构
+## 目录结构（单仓，每盘一个目录）
 
 ```
-docs/reviews/
-├── docs/          # 复盘分析 markdown 文件
-├── images/       # chess.com 对局截图
-└── videos/       # 生成的视频
+games/{date}_{对手}_{id}/
+├── {date}_{id}_{白}_{结果}_{黑}_{步}_{tc}.md   # 复盘分析 markdown
+├── engine_eval.json  pgn.json  metadata.json   # 引擎数据
+├── {id}.png                                     # chess.com 对局截图
+├── xhs/                                         # 小红书素材
+└── *.mp4                                        # 生成的视频（gitignore）
 ```
-
-**首次使用需创建 images 目录：**
-```bash
-mkdir -p docs/reviews/images
-```
+> `docs/` 仅为 CI 构建产物（html），不手动写入。对手 = 非 aaronwang2026 的一方。
 
 ## 平台支持
 
@@ -47,19 +45,16 @@ mkdir -p docs/reviews/images
 获取棋手最新对局前，先检查本地是否已有分析记录：
 
 ```bash
-ANALYSES_DIR="docs/reviews/docs"
-
-# 列出该棋手已有的分析文件
-ls "$ANALYSES_DIR/"*_{username}_* 2>/dev/null
+# 已有对局会有一个目录 games/{date}_{对手}_{id}/
+ls -d games/*_{game_id} 2>/dev/null || ls games/*/*_{username}_*.md 2>/dev/null
 ```
 
 **判断逻辑：**
 ```
 1. 从 API 获取目标对局基本信息（时间、对手、回合数）
-2. 构造文件名：{日期}_{game_id}_{白方}_{胜负}_{黑方}_{回合数}步_{time_control}.md
-   示例：2026-04-14_167293652644_aaronwang2026_执白胜_Clement924810_19步_10+0.md
-   time_control 格式："10+0"（10分钟+0秒加成）或 "30+0"（30分钟慢棋）
-3. 检查 docs/reviews/docs/ 是否存在同名文件
+2. 目录名：games/{日期}_{对手}_{game_id}/；内含复盘 md（描述性文件名）
+   示例目录：games/2026-04-14_Clement924810_167293652644/
+3. 检查 games/{日期}_{对手}_{game_id}/ 是否已存在（或含 engine_eval.json）
 4. 如已存在 → 直接读取本地文件输出，跳过所有获取
 5. 如不存在 → 继续第1步
 ```
@@ -68,19 +63,18 @@ ls "$ANALYSES_DIR/"*_{username}_* 2>/dev/null
 
 ### 第0.5步：检查 GitHub docs 是否已有分析
 
-本地没有时，进一步检查 GitHub 是否已有该对局分析：
+本地没有时，先 `git pull` 再查一次（自动复盘可能已由别处推上 GitHub）：
 
 ```bash
-GIT_DIR="."
-# 用 game_id 查找 GitHub docs 目录是否有该文件
-ls "$GIT_DIR/docs/"*_{game_id}_* 2>/dev/null
+git pull --rebase origin main 2>/dev/null
+ls -d games/*_{game_id} 2>/dev/null
 ```
 
 **判断逻辑：**
 ```
-1. 如果本地 docs/ 已存在 → 直接读取本地文件输出
-2. 如果 GitHub docs/ 已存在 → 拉回本地后读取输出
-3. 两个都没有 → 继续第1步获取 PGN 并分析
+1. 本地 games/*_{game_id}/ 已存在 → 直接读取输出
+2. git pull 后出现 → 读取输出
+3. 仍没有 → 继续第1步获取 PGN 并分析
 ```
 
 ---
@@ -129,25 +123,20 @@ echo "$PGN_TEXT" > /tmp/game_pgn_{game_id}.pgn
 
 **PGN 截图（opencli 获取真实图片）：**
 ```bash
-# 创建图片目录（如果不存在）
-IMAGES_DIR="docs/reviews/images"
-mkdir -p "$IMAGES_DIR"
+# 截图直接存进该盘目录 games/{date}_{对手}_{id}/{game_id}.png
+GAMEDIR="games/{date}_{opponent}_{game_id}"
+mkdir -p "$GAMEDIR"
 
-# 用 opencli 打开游戏页面并截图
 opencli browser open "https://www.chess.com/game/live/{game_id}"
 sleep 3  # 等待页面加载
-opencli browser screenshot "$IMAGES_DIR/{game_id}.png"
-
-# 在 markdown 中引用图片
-# 在 ## 🏆 复盘总结 之后添加：
-# ![对局截图](../images/{game_id}.png)
+opencli browser screenshot "$GAMEDIR/{game_id}.png"
 ```
 
 **注意**：
 - opencli 复用已有 Chrome 会话，无需重新登录
 - 截图包含完整棋盘和 Stockfish 分析
-- 图片保存到 `docs/reviews/images/{game_id}.png`
-- 在 markdown 顶部或底部添加图片引用：`![](../images/{game_id}.png)`
+- 图片存进该盘目录 `games/{date}_{对手}_{game_id}/{game_id}.png`
+- 网站构建时 `generate.py` 会自动把它拷进 `docs/img/` 并嵌入页面，**无需在 md 里手写图片引用**
 
 ---
 
@@ -175,7 +164,8 @@ curl "https://api.chess.com/pub/player/{username}/games/{YYYY}/{MM}"
 用 `analyze.py` 解析 PGN 并生成分析报告：
 
 ```bash
-python3 ~/.agents/skills/chess-analysis/scripts/analyze.py --pgn-file /tmp/game_pgn_{game_id}.pgn 16
+python3 skills/chess-analysis/scripts/analyze.py --pgn-file /tmp/game_pgn_{game_id}.pgn 16 \
+  --focus-user aaronwang2026 --output-dir games/{date}_{opponent}_{game_id}/
 ```
 
 ---
@@ -208,7 +198,8 @@ PGN 获取完成后，交给 `chess-analysis` skill 进行详细分析：
 
 ```bash
 # 调用 chess-analysis skill 的 analyze.py
-python3 ~/.agents/skills/chess-analysis/scripts/analyze.py --pgn-file /tmp/game_pgn_{game_id}.pgn 16
+python3 skills/chess-analysis/scripts/analyze.py --pgn-file /tmp/game_pgn_{game_id}.pgn 16 \
+  --focus-user aaronwang2026 --output-dir games/{date}_{opponent}_{game_id}/
 ```
 
 **或**：直接调用 `chess-analysis` skill 进行完整复盘分析。

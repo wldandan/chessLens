@@ -5,7 +5,8 @@ set -e
 # Syncs review results into the consolidated chessLens repository (single-repo).
 # 每盘一个目录 games/{date}_{opp}_{id}/，CI(deploy.yml) 负责构建 html。
 
-REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"   # chessLens repo root
+# chessLens 仓库根：优先环境变量 CHESSLENS_REPO，否则绝对路径默认值（仓库内/部署副本通用）。
+REPO_DIR="${CHESSLENS_REPO:-$HOME/Projects/tutorials/leiw/chessLens}"
 GAMES_DIR="$REPO_DIR/games"
 USER="${CURRENT_CHESS_USER:-aaronwang2026}"
 
