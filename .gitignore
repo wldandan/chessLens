@@ -1,0 +1,17 @@
+# Built site output — CI (deploy.yml) regenerates from docs/reviews/docs/*.md
+/docs/*.html
+
+# Local-only video artifacts (not used by the site, ~8MB)
+docs/reviews/videos/
+
+# Python / OS cruft
+__pycache__/
+*.pyc
+.DS_Store
+
+# Local build dir (review-repo legacy)
+/_site/
+
+# Sensitive
+cookies.txt
+*.env

@@ -3,18 +3,16 @@
 
 set -e
 
-REVIEWS_DIR="$HOME/chessLens/chess-reviews-summary/docs"
-GIT_DIR="$HOME/chessLens/chess-reviews-summary"
+# 单仓（chessLens）：复盘 md 直接落在 docs/reviews/docs/，CI 负责构建 html。
+# 仓库根从脚本位置推导（skills/chess-analysis/scripts/ → 三级上）。
+GIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+REVIEWS_DIR="$GIT_DIR/docs/reviews/docs"
 AUTHOR_NAME="aaronwang2026 Analyst"
 AUTHOR_EMAIL="5109343@qq.com"
 
 cd "$GIT_DIR"
 git config user.name "$AUTHOR_NAME" 2>/dev/null || true
 git config user.email "$AUTHOR_EMAIL" 2>/dev/null || true
-
-# 同步最新文件到 docs/ 目录
-mkdir -p "$GIT_DIR/docs"
-cp -f "$REVIEWS_DIR"/*.md "$GIT_DIR/docs/" 2>/dev/null || true
 
 # 检查是否有变更
 if git diff --quiet && git diff --cached --quiet && [ -z "$(git ls-files --others --exclude-standard 2>/dev/null)" ]; then
@@ -54,7 +52,7 @@ validate_review_format() {
 }
 
 echo "Validating format of new/changed md files..."
-for f in docs/*.md; do
+for f in docs/reviews/docs/*.md; do
     if [ -f "$f" ]; then
         if ! validate_review_format "$f"; then
             echo ""
@@ -75,7 +73,7 @@ echo "Push done, waiting for GitHub Pages deployment..."
 
 # 验证 GitHub Pages 是否已更新
 # 策略：从最近新增的 md 文件提取对手名，检测页面是否包含该记录
-SITE_URL="https://wldandan.github.io/chess-reviews-summary/"
+SITE_URL="https://wldandan.github.io/chessLens/"
 MAX_WAIT=120
 INTERVAL=10
 elapsed=0

@@ -207,7 +207,7 @@ def write_board_screenshot(game_id: str, output_dir: Path):
     possible_sources = [
         Path(f"docs/reviews/images/{game_id}.png"),
         Path(f"docs/reviews/images/{game_id.split('_')[1] if '_' in game_id else game_id}.png"),
-        Path(f"~/chessLens/chess-reviews-summary/images/{game_id}.png").expanduser(),
+        Path(f"~/Projects/tutorials/leiw/chessLens/docs/reviews/images/{game_id}.png").expanduser(),
     ]
 
     images_dir = output_dir / "images"

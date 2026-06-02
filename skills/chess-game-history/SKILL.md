@@ -16,7 +16,7 @@ description: >
 ## 目录结构
 
 ```
-~/chessLens/chess-reviews-summary/
+docs/reviews/
 ├── docs/          # 复盘分析 markdown 文件
 ├── images/       # chess.com 对局截图
 └── videos/       # 生成的视频
@@ -24,7 +24,7 @@ description: >
 
 **首次使用需创建 images 目录：**
 ```bash
-mkdir -p ~/chessLens/chess-reviews-summary/images
+mkdir -p docs/reviews/images
 ```
 
 ## 平台支持
@@ -47,7 +47,7 @@ mkdir -p ~/chessLens/chess-reviews-summary/images
 获取棋手最新对局前，先检查本地是否已有分析记录：
 
 ```bash
-ANALYSES_DIR="$HOME/chessLens/chess-reviews-summary/docs"
+ANALYSES_DIR="docs/reviews/docs"
 
 # 列出该棋手已有的分析文件
 ls "$ANALYSES_DIR/"*_{username}_* 2>/dev/null
@@ -59,7 +59,7 @@ ls "$ANALYSES_DIR/"*_{username}_* 2>/dev/null
 2. 构造文件名：{日期}_{game_id}_{白方}_{胜负}_{黑方}_{回合数}步_{time_control}.md
    示例：2026-04-14_167293652644_aaronwang2026_执白胜_Clement924810_19步_10+0.md
    time_control 格式："10+0"（10分钟+0秒加成）或 "30+0"（30分钟慢棋）
-3. 检查 $HOME/chessLens/chess-reviews-summary/docs/ 是否存在同名文件
+3. 检查 docs/reviews/docs/ 是否存在同名文件
 4. 如已存在 → 直接读取本地文件输出，跳过所有获取
 5. 如不存在 → 继续第1步
 ```
@@ -71,7 +71,7 @@ ls "$ANALYSES_DIR/"*_{username}_* 2>/dev/null
 本地没有时，进一步检查 GitHub 是否已有该对局分析：
 
 ```bash
-GIT_DIR="$HOME/Projects/tutorials/chess-reviews-summary"
+GIT_DIR="."
 # 用 game_id 查找 GitHub docs 目录是否有该文件
 ls "$GIT_DIR/docs/"*_{game_id}_* 2>/dev/null
 ```
@@ -130,7 +130,7 @@ echo "$PGN_TEXT" > /tmp/game_pgn_{game_id}.pgn
 **PGN 截图（opencli 获取真实图片）：**
 ```bash
 # 创建图片目录（如果不存在）
-IMAGES_DIR="$HOME/chessLens/chess-reviews-summary/images"
+IMAGES_DIR="docs/reviews/images"
 mkdir -p "$IMAGES_DIR"
 
 # 用 opencli 打开游戏页面并截图
@@ -146,7 +146,7 @@ opencli browser screenshot "$IMAGES_DIR/{game_id}.png"
 **注意**：
 - opencli 复用已有 Chrome 会话，无需重新登录
 - 截图包含完整棋盘和 Stockfish 分析
-- 图片保存到 `~/chessLens/chess-reviews-summary/images/{game_id}.png`
+- 图片保存到 `docs/reviews/images/{game_id}.png`
 - 在 markdown 顶部或底部添加图片引用：`![](../images/{game_id}.png)`
 
 ---

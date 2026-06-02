@@ -2,23 +2,19 @@
 set -e
 
 # Git Sync Script for Chess Reviews
-# Syncs review results to the chess-reviews-summary repository
+# Syncs review results into the consolidated chessLens repository (single-repo).
+# 复盘 md 落在 docs/reviews/docs/，CI(deploy.yml) 负责构建 html。
 
-REVIEWS_REPO="git@github.com:wldandan/chess-reviews-summary.git"
-REVIEWS_DIR="$HOME/chessLens/chess-reviews-summary"
+REVIEWS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"   # chessLens repo root
+DOCS_DIR="$REVIEWS_DIR/docs/reviews/docs"
 
 # Function to sync reviews
 sync_reviews() {
     local message="${1:-Update chess review}"
 
-    # Clone or pull the reviews repo
-    if [ -d "$REVIEWS_DIR/.git" ]; then
-        cd "$REVIEWS_DIR"
-        git pull --rebase origin main
-    else
-        git clone "$REVIEWS_REPO" "$REVIEWS_DIR"
-        cd "$REVIEWS_DIR"
-    fi
+    cd "$REVIEWS_DIR"
+    git pull --rebase origin main || true
+    mkdir -p "$DOCS_DIR"
 
     # Copy new review files from workspace memory
     local workspace_memory="$HOME/.openclaw/workspace-chess-ai-coach/memory"
@@ -26,8 +22,8 @@ sync_reviews() {
         # Copy new/changed memory files
         for f in "$workspace_memory"/*.md; do
             if [ -f "$f" ]; then
-                cp "$f" .
-                git add "$(basename "$f")"
+                cp "$f" "$DOCS_DIR/"
+                git add "docs/reviews/docs/$(basename "$f")"
             fi
         done
     fi
